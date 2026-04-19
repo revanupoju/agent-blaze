@@ -325,13 +325,69 @@ async def chat(req: ChatRequest):
         ]
     )
 
+    # Check if this is a research/discovery request that needs live web data
+    is_research_request = any(
+        kw in last_msg.lower() for kw in [
+            "find", "discover", "search", "look up", "browse", "scrape",
+            "trending", "trend", "what are people", "reddit", "quora",
+            "competitor", "research", "analyze online", "real threads",
+        ]
+    )
+
+    live_data_context = ""
+    if is_research_request and len(last_msg.split()) >= 4:
+        try:
+            from agents.web_scraper import research_live, discover_threads
+
+            if any(kw in last_msg.lower() for kw in ["thread", "discover", "find", "reddit", "community"]):
+                # Rally / community discovery
+                discovery = discover_threads()
+                if discovery.get("threads"):
+                    thread_summaries = []
+                    for t in discovery["threads"][:10]:
+                        thread_summaries.append(
+                            f"- **{t.get('title', '')}** (r/{t.get('subreddit', '')}, {t.get('score', 0)} upvotes, {t.get('num_comments', 0)} comments)\n  {t.get('body', '')[:150]}..."
+                        )
+                    live_data_context = f"\n\n**LIVE DATA — I just scanned Reddit and found {discovery['discovered']} relevant threads:**\n\n" + "\n\n".join(thread_summaries)
+            else:
+                # Freq / general research
+                topic = last_msg.lower().replace("research", "").replace("trending", "").replace("analyze", "").strip()
+                if len(topic) < 5:
+                    topic = "personal loan India"
+                research = research_live(topic)
+
+                reddit_posts = research.get("reddit", {}).get("posts", [])
+                trends = research.get("google_trends", {}).get("trends", {})
+
+                parts = []
+                if reddit_posts:
+                    parts.append(f"**LIVE Reddit Data** ({len(reddit_posts)} posts found):")
+                    for p in reddit_posts[:8]:
+                        parts.append(f"- **{p.get('title', '')}** (r/{p.get('subreddit', '')}, {p.get('score', 0)} upvotes)")
+
+                if trends:
+                    parts.append("\n**LIVE Google Trends Data:**")
+                    for kw, data in trends.items():
+                        parts.append(f"- **{kw}**: {data.get('trend', 'stable')} (current interest: {data.get('current', 'N/A')})")
+                        related = research.get("google_trends", {}).get("related_queries", {}).get(kw, {})
+                        if related.get("rising_queries"):
+                            parts.append(f"  Rising queries: {', '.join(related['rising_queries'][:3])}")
+
+                if parts:
+                    live_data_context = "\n\n" + "\n".join(parts)
+        except Exception as e:
+            live_data_context = f"\n\n(Web scraping attempted but hit an issue: {str(e)[:100]})"
+
     if is_generation_request:
         instruction = "The user has given a specific content request. Generate the content NOW — do not ask clarifying questions. Produce your best work immediately. Be thorough and detailed."
+    elif is_research_request and live_data_context:
+        instruction = "I just scraped the live web for real data. Use the LIVE DATA below to provide genuine, data-backed insights. Reference specific posts, trends, and numbers from the real data. Do NOT make up data — use what was actually found."
     else:
         instruction = "The user is chatting. Respond conversationally. If greeting you, introduce yourself briefly and ask what they'd like to create."
 
     prompt = f"""Conversation so far:
 {conversation_text}
+{live_data_context}
 
 {instruction}
 
@@ -341,33 +397,57 @@ Format your output beautifully using Markdown."""
     return {"response": response}
 
 
-# ── Browser Use endpoint (real web browsing) ────────────────────
+# ── Live Web Scraping endpoints ─────────────────────────────────
 
 class BrowseRequest(BaseModel):
     task: str
     agent: str = "research"
 
 
-@app.post("/api/browse")
-async def browse(req: BrowseRequest):
-    """Use browser-use to browse the real web — find Reddit threads, Quora questions, trends, competitor content."""
-    try:
-        from browser_use import Agent as BrowserAgent, Browser
-        browser = Browser()
-        agent = BrowserAgent(task=req.task, llm=None)  # Uses default LLM
-        result = await agent.run()
-        return {"status": "success", "result": str(result)}
-    except ImportError:
-        # Fallback: use LLM to simulate research based on its knowledge
-        from agents.llm_client import generate
-        system = f"""You are a web research assistant. The user wants you to browse the web for information.
-Since you can't actually browse, use your knowledge to provide realistic, detailed findings
-as if you had just browsed the requested sites. Be specific with usernames, post titles, dates, and details.
-Make it feel like real data you just scraped."""
-        response = generate(system, f"Research task: {req.task}", temperature=0.8, max_tokens=3000)
-        return {"status": "simulated", "result": response}
-    except Exception as e:
-        return {"status": "error", "error": str(e)}
+class RedditRequest(BaseModel):
+    subreddit: str = "personalfinanceindia"
+    query: str = ""
+    limit: int = 10
+
+
+class TrendsRequest(BaseModel):
+    keywords: str = "personal loan India"
+
+
+@app.post("/api/browse/reddit")
+async def browse_reddit(req: RedditRequest):
+    """Fetch real Reddit posts — live data, no API key needed."""
+    from agents.web_scraper import scrape_reddit, search_reddit
+    if req.query:
+        posts = search_reddit(req.query, subreddit=req.subreddit, limit=req.limit)
+    else:
+        posts = scrape_reddit(req.subreddit, limit=req.limit)
+    return {"status": "live", "source": "reddit", "posts": posts, "count": len(posts)}
+
+
+@app.post("/api/browse/trends")
+async def browse_trends(req: TrendsRequest):
+    """Fetch real Google Trends data — live, no API key needed."""
+    from agents.web_scraper import get_google_trends
+    keywords = [k.strip() for k in req.keywords.split(",")]
+    trends = get_google_trends(keywords)
+    return {"status": "live", "source": "google_trends", "data": trends}
+
+
+@app.post("/api/browse/research")
+async def browse_research(req: BrowseRequest):
+    """Full live research sweep — Reddit + Google Trends."""
+    from agents.web_scraper import research_live
+    results = research_live(req.task)
+    return {"status": "live", "source": "web_scraping", "data": results}
+
+
+@app.post("/api/browse/discover")
+async def browse_discover():
+    """Discover real threads about money problems across Reddit."""
+    from agents.web_scraper import discover_threads
+    results = discover_threads()
+    return {"status": "live", "source": "reddit_live", "data": results}
 
 
 # ── Orchestrator endpoint (the harness loop) ────────────────────
