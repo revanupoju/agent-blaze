@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Blaze — AI Marketing Agent for Apollo Cash",
-  description: "Three-agent AI marketing system powering Apollo Cash growth",
+  title: "Agent Blaze — AI Marketing Platform",
+  description: "Four AI agents powering Apollo Cash marketing — Vortex, Draft, Rally, Freq",
+  icons: {
+    icon: "/blaze-logo.png",
+    apple: "/blaze-logo.png",
+  },
 };
 
 export default function RootLayout({

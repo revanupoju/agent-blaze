@@ -169,8 +169,14 @@ Rules:
 - At the end, add a **Sources** section with numbered list matching the inline references:
   1. [Thread title](https://reddit.com/r/subreddit) — score, comments
   2. [Google Trends: keyword](https://trends.google.com/trends/explore?q=keyword&geo=IN) — trend direction
-- Example: "Delivery workers are posting about monsoon breakdowns [1], with searches for emergency loans up 140% [2]."
-- Use today's actual date, not a made-up date""",
+- Example in text: "Delivery workers are posting about monsoon breakdowns [1], with searches for emergency loans up 140% [2]."
+- ALWAYS end with a numbered **Sources** section listing every reference. This is MANDATORY. Format:
+
+**Sources**
+1. [Thread title](https://reddit.com/r/subreddit) — score, comments
+2. [Google Trends: keyword](https://trends.google.com/trends/explore?q=keyword&geo=IN) — trend direction
+
+- Use today's ACTUAL date (it will be injected below)""",
 }
 
 OUTPUT_RULES = """
@@ -273,7 +279,7 @@ def self_evaluate_and_improve(content: str, agent: str) -> str:
 async def chat(req: ChatRequest):
     """Conversational chat with live web data and self-improvement."""
     base_system = AGENT_PERSONAS.get(req.agent, AGENT_PERSONAS["social"])
-    system = base_system + OUTPUT_RULES
+    system = base_system + OUTPUT_RULES + "\n\nToday's date is April 19, 2026. Use this exact date when referencing 'today' or 'this week'."
 
     import os
 
