@@ -103,7 +103,9 @@ export function CalendarView() {
 
       {error && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 mb-6 text-[13px] text-destructive">
-          {error}. Make sure the backend is running.
+          {error.includes("AbortError") || error.includes("abort")
+            ? "Request timed out — calendar generation takes 30-60 seconds. Try again."
+            : `${error}. This might be temporary — try again in a few seconds.`}
         </div>
       )}
 
