@@ -280,19 +280,21 @@ async def chat(req: ChatRequest):
             if parts[0] == "ollama":
                 os.environ["OLLAMA_MODEL"] = parts[1]
 
-    # LLM call with failover chain (Luna pattern: Cerebras → Groq → Ollama)
+    # LLM call with retry + backoff (handles Cerebras 429 rate limits)
     def llm_call(system_prompt: str, user_prompt: str, temp: float = 0.8, max_tok: int = 4000) -> str:
-        from agents.llm_client import _call_cerebras, _call_ollama
-        providers = [
-            ("cerebras", _call_cerebras),
-            ("ollama", _call_ollama),
-        ]
-        for name, fn in providers:
+        from agents.llm_client import _call_cerebras
+        import time
+        last_error = ""
+        for attempt in range(3):
             try:
-                return fn(system_prompt, user_prompt, temp, max_tok)
+                return _call_cerebras(system_prompt, user_prompt, temp, max_tok)
             except Exception as e:
-                continue
-        return "All providers failed. Please try again."
+                last_error = str(e)
+                if "429" in last_error or "rate" in last_error.lower():
+                    time.sleep(1.5 * (attempt + 1))  # 1.5s, 3s, 4.5s backoff
+                else:
+                    break
+        return f"LLM temporarily unavailable ({last_error[:80]}). Please try again in a moment."
 
     # Build conversation
     conversation_parts = []
@@ -336,7 +338,39 @@ async def chat(req: ChatRequest):
                 threads = [t for t in data.get("threads", []) if "error" not in t and t.get("title")][:5]
 
                 if threads:
-                    # Build response with REAL data — Python formats the structure, LLM only writes replies
+                    # Build thread list for the LLM (ONE call for all replies)
+                    thread_list = ""
+                    for i, t in enumerate(threads):
+                        mention = "Mention Apollo Cash as ONE option among others" if i < 3 else "Do NOT mention Apollo Cash — pure advice only"
+                        length = "short (2-3 sentences)" if i % 2 == 0 else "detailed (4-6 sentences)"
+                        thread_list += f"""
+THREAD {i+1}: r/{t.get('subreddit','')} — "{t['title']}"
+Body: {t.get('body','')[:200]}
+Instructions: {mention}. Keep it {length}. Vary your style.
+---
+"""
+                    # ONE LLM call for all replies
+                    batch_prompt = f"""Write Reddit replies for each of these REAL threads. Each reply should sound like a different person. No URLs. No numbered lists for every reply. Vary tone and length.
+
+{thread_list}
+
+Format each reply as:
+REPLY 1:
+(your reply)
+
+REPLY 2:
+(your reply)
+etc."""
+
+                    all_replies = llm_call(system, batch_prompt, temp=0.9, max_tok=2000)
+                    all_replies = strip_promotional_language(all_replies)
+
+                    # Parse replies
+                    import re
+                    reply_blocks = re.split(r'REPLY\s*\d+\s*:', all_replies)
+                    reply_blocks = [r.strip() for r in reply_blocks if r.strip()]
+
+                    # Build final response with Python-controlled structure
                     parts = [f"I scanned Reddit and found **{data['discovered']} real threads**. Here are the top {len(threads)} with my responses:\n"]
 
                     for i, t in enumerate(threads):
@@ -345,21 +379,12 @@ async def chat(req: ChatRequest):
                         if t.get("author"):
                             parts.append(f"*by u/{t['author']}*")
                         if t.get("body"):
-                            parts.append(f"\n> {t['body'][:250]}{'...' if len(t.get('body','')) > 250 else ''}\n")
+                            parts.append(f"\n> {t['body'][:200]}{'...' if len(t.get('body','')) > 200 else ''}\n")
 
-                        # Generate ONLY the reply using LLM
-                        mention_apollo = i < 3  # First 3 mention Apollo, last 2 pure advice
-                        reply_prompt = f"""Write a single Reddit reply to this post. Sound like a real person, not a brand.
-Post title: "{t['title']}"
-Post body: "{t.get('body', '')[:300]}"
-Subreddit: r/{t.get('subreddit', '')}
-{"Mention Apollo Cash naturally as ONE option among others." if mention_apollo else "Do NOT mention Apollo Cash. Give pure helpful advice only."}
-Keep it {"short (2-3 sentences)" if i % 2 == 0 else "detailed (4-6 sentences)"}. No URLs. No numbered lists for every response — vary the style."""
-
-                        reply = llm_call(system, reply_prompt, temp=0.9, max_tokens=400)
-                        reply = strip_promotional_language(reply)
+                        reply = reply_blocks[i] if i < len(reply_blocks) else "Great question — would need more context to give specific advice."
+                        mention_apollo = i < 3
                         parts.append(f"**My response:**\n{reply}")
-                        parts.append(f"\n*Strategy: {'Mentions Apollo Cash as one option' if mention_apollo else 'Pure advice — trust building, no brand mention'}*\n")
+                        parts.append(f"\n*Strategy: {'Mentions Apollo Cash as one option' if mention_apollo else 'Pure advice — trust building'}*\n")
 
                     response = "\n".join(parts)
                     return {"response": response}
