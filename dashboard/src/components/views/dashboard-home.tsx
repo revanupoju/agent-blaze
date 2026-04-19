@@ -39,16 +39,25 @@ export function DashboardHome() {
     getOutputs("community").then((d: any) => setCommunityCount(d.count)).catch(() => {});
   }, []);
 
+  const [pipelineStatus, setPipelineStatus] = useState("");
+
   const handleRunPipeline = async () => {
     setPipelineRunning(true);
+    setPipelineStatus("Starting all agents...");
     try {
       const { runPipeline } = await import("@/lib/api");
-      await runPipeline();
+      setPipelineStatus("Running Vortex, Draft, Rally, Freq...");
+      const result = await runPipeline();
+      const tools = result.tools_called || [];
+      setPipelineStatus(`Done — ${tools.length} tools executed`);
+      // Refresh counts
       getOutputs("social_media").then((d: any) => setSocialCount(d.count)).catch(() => {});
       getOutputs("articles").then((d: any) => setArticleCount(d.count)).catch(() => {});
       getOutputs("community").then((d: any) => setCommunityCount(d.count)).catch(() => {});
-    } catch (e) {
-      console.error(e);
+      setTimeout(() => setPipelineStatus(""), 3000);
+    } catch (e: any) {
+      setPipelineStatus(e.name === "AbortError" ? "Timed out — try again" : "Error — try again");
+      setTimeout(() => setPipelineStatus(""), 3000);
     } finally {
       setPipelineRunning(false);
     }
@@ -117,11 +126,19 @@ export function DashboardHome() {
           disabled={pipelineRunning}
           data-coach="pipeline"
           className="rounded-xl accent-gradient text-white p-4 flex flex-col items-center justify-center gap-1.5 hover:opacity-90 disabled:opacity-50 transition-all shadow-md shadow-accent/15"
+          style={{ color: "#FFF" }}
         >
           {pipelineRunning ? <Loader2 className="h-5 w-5 animate-spin" /> : <Zap className="h-5 w-5" />}
-          <span className="text-[11px] font-medium">{pipelineRunning ? "Running..." : "Run All"}</span>
+          <span className="text-[11px] font-medium">
+            {pipelineRunning ? "Running..." : pipelineStatus || "Run All"}
+          </span>
         </button>
       </div>
+      {pipelineStatus && (
+        <p className="text-[12px] text-muted-foreground text-center mt-3 max-w-[640px] mx-auto animate-fade-up">
+          {pipelineStatus}
+        </p>
+      )}
     </div>
   );
 }
