@@ -233,11 +233,15 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
 
     try {
       const chatHistory = newMessages.filter(m => !m.loading).map(m => ({ role: m.role, content: m.content }));
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 120000); // 2 min timeout
       const res = await fetch(`${API}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: chatHistory, agent, model }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
       if (!res.ok) throw new Error(`API error: ${res.status}`);
       const data = await res.json();
       const content = data.response || "No response.";
@@ -250,7 +254,9 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
       persistMessages(finalMessages, threadId);
     } catch (err: any) {
       const errorMessages = newMessages.map(m =>
-        m.id === assistantId ? { ...m, content: `**Error:** ${err.message}\n\nMake sure the backend is running:\n\`python3 server.py\``, loading: false } : m
+        m.id === assistantId ? { ...m, content: err.name === "AbortError"
+          ? "**Timed out** — the agent is doing heavy processing (Reddit scraping + content generation + quality check). Try a simpler prompt or switch to **Llama 3.1 8B** for faster responses."
+          : `**Error:** ${err.message}\n\nThis might be temporary — try again in a few seconds.`, loading: false } : m
       );
       setMessages(errorMessages);
       persistMessages(errorMessages, threadId);
