@@ -38,7 +38,7 @@ function AgentIcon({ config, size = 20 }: { config: AgentConfig; size?: number }
 
 const MODELS = [
   { id: "cerebras:llama3.1-8b", label: "Llama 3.1 8B", provider: "Cerebras", badge: "Fast" },
-  { id: "cerebras:qwen-3-235b", label: "Qwen 3 235B", provider: "Cerebras", badge: "Powerful" },
+  { id: "cerebras:qwen-3-235b-a22b-instruct-2507", label: "Qwen 3 235B", provider: "Cerebras", badge: "Powerful" },
   { id: "ollama:llama3.1", label: "Llama 3.1", provider: "Ollama", badge: "Local" },
 ];
 
@@ -236,7 +236,7 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
       const res = await fetch(`${API}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: chatHistory, agent }),
+        body: JSON.stringify({ messages: chatHistory, agent, model }),
       });
       if (!res.ok) throw new Error(`API error: ${res.status}`);
       const data = await res.json();
