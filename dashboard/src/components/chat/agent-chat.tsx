@@ -37,8 +37,8 @@ function AgentIcon({ config, size = 20 }: { config: AgentConfig; size?: number }
 }
 
 const MODELS = [
+  { id: "cerebras:qwen-3-235b-a22b-instruct-2507", label: "Qwen 3 235B", provider: "Cerebras", badge: "Recommended" },
   { id: "cerebras:llama3.1-8b", label: "Llama 3.1 8B", provider: "Cerebras", badge: "Fast" },
-  { id: "cerebras:qwen-3-235b-a22b-instruct-2507", label: "Qwen 3 235B", provider: "Cerebras", badge: "Powerful" },
   { id: "ollama:llama3.1", label: "Llama 3.1", provider: "Ollama", badge: "Local" },
 ];
 
@@ -191,7 +191,7 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [lang, setLang] = useState<"english" | "hinglish">("english");
-  const [model, setModel] = useState("cerebras:llama3.1-8b");
+  const [model, setModel] = useState("cerebras:qwen-3-235b-a22b-instruct-2507");
   const [latestStreamId, setLatestStreamId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
