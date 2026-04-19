@@ -1,0 +1,11 @@
+node_modules/
+.next/
+__pycache__/
+*.pyc
+.env
+output/
+data/
+browser-use/
+.DS_Store
+.playwright-mcp/
+*.png

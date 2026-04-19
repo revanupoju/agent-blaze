@@ -1,0 +1,203 @@
+@import "tailwindcss";
+@import "@fontsource-variable/sora";
+@import "@fontsource/instrument-serif";
+
+/* Blaze Design System — Light default */
+:root {
+  --accent: #4256FF;
+  --accent-start: #2C3AAE;
+  --accent-end: #4256FF;
+  --accent-hover: #3347DD;
+  --accent-muted: rgba(66, 86, 255, 0.07);
+
+  /* Light surfaces */
+  --surface-base: #FFFCFA;
+  --surface-elevated: #FFFFFF;
+  --surface-hover: #F7F4F2;
+  --surface-sunken: #FFFCFA;
+
+  --surface-border: rgba(0, 0, 0, 0.08);
+  --surface-border-prominent: rgba(0, 0, 0, 0.14);
+
+  --text-primary: #111111;
+  --text-secondary: #6B6B6B;
+  --text-tertiary: #999999;
+
+  --status-live: #16A34A;
+  --status-pending: #CA8A04;
+  --status-rejected: #DC2626;
+  --status-info: #2563EB;
+  --status-draft: #9CA3AF;
+
+  --background: var(--surface-base);
+  --foreground: var(--text-primary);
+  --card: var(--surface-elevated);
+  --card-foreground: var(--text-primary);
+  --border: var(--surface-border);
+  --input: var(--surface-border);
+  --ring: var(--accent);
+  --primary: var(--accent);
+  --primary-foreground: #FFFFFF;
+  --muted: var(--surface-hover);
+  --muted-foreground: var(--text-secondary);
+  --destructive: var(--status-rejected);
+  --sidebar-bg: var(--surface-sunken);
+  --avatar-bg: #E8E8ED;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-muted: var(--accent-muted);
+  --color-surface-base: var(--surface-base);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-border: var(--surface-border);
+  --color-status-live: var(--status-live);
+  --color-status-pending: var(--status-pending);
+  --color-status-rejected: var(--status-rejected);
+  --color-status-info: var(--status-info);
+  --color-status-draft: var(--status-draft);
+  --color-sidebar: var(--sidebar-bg);
+  --color-avatar-bg: var(--avatar-bg);
+  --font-sans: "Sora Variable", system-ui, sans-serif;
+  --font-serif: "Instrument Serif", Georgia, serif;
+  --font-mono: "SF Mono", ui-monospace, monospace;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up { animation: fade-up 0.35s ease-out both; }
+
+.stagger-children > * { animation: fade-up 0.3s ease-out both; }
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+
+* { border-color: var(--border); }
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+}
+
+.accent-gradient {
+  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+}
+
+/* Card shadows for light mode */
+.card-shadow {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 0 0 1px rgba(0,0,0,0.06);
+}
+
+/* Glass card — frosted glass with subtle refraction */
+.glass {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    0 4px 16px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Glass pill — smaller glass elements (badges, tags) */
+.glass-pill {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 0.5px 1px rgba(0, 0, 0, 0.03),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Glass input — for chat input area */
+.glass-input {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Sidebar glass */
+.glass-sidebar {
+  background: rgba(255, 252, 250, 0.85);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+}
+
+/* Coach mark tooltip glass */
+.glass-tooltip {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Accent gradient glow on hover */
+.glow-accent:hover {
+  box-shadow:
+    0 4px 20px rgba(66, 86, 255, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* Liquid highlight shimmer — subtle light sweep */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.4) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.18); }
+
+::selection { background: var(--accent-muted); color: var(--text-primary); }
