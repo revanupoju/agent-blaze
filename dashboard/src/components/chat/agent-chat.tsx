@@ -297,7 +297,7 @@ function StaticBubble({ content }: { content: string }) {
 // ── Main chat component ────────────────────────────────────────
 
 export function AgentChat({ agent, config }: { agent: string; config: AgentConfig }) {
-  const { activeThreadId, threads, createThread, updateThread } = useUIStore();
+  const { activeThreadId, threads, createThread, updateThread, pendingMessage, setActiveAgent } = useUIStore();
 
   const activeThread = threads.find((t) => t.id === activeThreadId && t.agent === agent);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -319,6 +319,22 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
       setLatestStreamId(null);
     }
   }, [activeThreadId, agent]);
+
+  // Auto-send pending message (from "View outputs" link)
+  const pendingHandled = useRef(false);
+  useEffect(() => {
+    if (pendingMessage && !pendingHandled.current && messages.length === 0 && !loading) {
+      pendingHandled.current = true;
+      setTimeout(() => {
+        send(pendingMessage);
+        setActiveAgent(agent); // Clear the pending message
+      }, 500);
+    }
+  }, [pendingMessage, messages.length, loading]);
+
+  useEffect(() => {
+    pendingHandled.current = false;
+  }, [agent]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });

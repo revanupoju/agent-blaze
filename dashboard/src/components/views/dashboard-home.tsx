@@ -139,11 +139,11 @@ export function DashboardHome() {
           <p className="text-[12px] text-muted-foreground">{pipelineStatus}</p>
           {pipelineStatus.includes("Done") && (
             <div className="flex items-center justify-center gap-3 mt-3">
-              <button onClick={() => setActiveAgent("social")} className="text-[12px] text-accent hover:underline">View Vortex outputs</button>
+              <button onClick={() => setActiveAgent("social", "Show me the social media posts you just generated")} className="text-[12px] text-accent hover:underline">View Vortex outputs</button>
               <span className="text-muted-foreground/30">·</span>
-              <button onClick={() => setActiveAgent("seo")} className="text-[12px] text-accent hover:underline">View Draft outputs</button>
+              <button onClick={() => setActiveAgent("seo", "Show me the SEO article you just generated")} className="text-[12px] text-accent hover:underline">View Draft outputs</button>
               <span className="text-muted-foreground/30">·</span>
-              <button onClick={() => setActiveAgent("community")} className="text-[12px] text-accent hover:underline">View Rally outputs</button>
+              <button onClick={() => setActiveAgent("community", "Show me the community responses you just generated")} className="text-[12px] text-accent hover:underline">View Rally outputs</button>
             </div>
           )}
         </div>

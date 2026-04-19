@@ -13,6 +13,7 @@ interface UIState {
   sidebarExpanded: boolean;
   mobileMenuOpen: boolean;
   activeAgent: string | null;
+  pendingMessage: string | null;
   onboarded: boolean;
   loggedIn: boolean;
   userName: string;
@@ -22,7 +23,7 @@ interface UIState {
   activeThreadId: string | null;
   toggleSidebar: () => void;
   setMobileMenuOpen: (open: boolean) => void;
-  setActiveAgent: (agent: string | null) => void;
+  setActiveAgent: (agent: string | null, pendingMessage?: string) => void;
   setOnboarded: (v: boolean) => void;
   login: (name: string, email: string, isDemo: boolean) => void;
   logout: () => void;
@@ -38,6 +39,7 @@ export const useUIStore = create<UIState>()(
       sidebarExpanded: true,
       mobileMenuOpen: false,
       activeAgent: null,
+      pendingMessage: null,
       onboarded: false,
       loggedIn: false,
       userName: "",
@@ -48,7 +50,7 @@ export const useUIStore = create<UIState>()(
 
       toggleSidebar: () => set((s) => ({ sidebarExpanded: !s.sidebarExpanded })),
       setMobileMenuOpen: (open) => set({ mobileMenuOpen: open }),
-      setActiveAgent: (agent) => set({ activeAgent: agent, activeThreadId: null }),
+      setActiveAgent: (agent, pendingMessage) => set({ activeAgent: agent, activeThreadId: null, pendingMessage: pendingMessage || null }),
       setOnboarded: (v) => set({ onboarded: v }),
 
       login: (name, email, isDemo) => set({ loggedIn: true, userName: name, userEmail: email, isDemo, onboarded: false }),
