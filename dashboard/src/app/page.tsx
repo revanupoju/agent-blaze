@@ -6,14 +6,12 @@ import { CoachMarks } from "@/components/onboarding";
 import { LoginPage } from "@/components/login";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
-import { useState } from "react";
 
 export default function Page() {
-  const { sidebarExpanded, onboarded, setOnboarded } = useUIStore();
-  const [loggedIn, setLoggedIn] = useState(false);
+  const { sidebarExpanded, onboarded, setOnboarded, loggedIn } = useUIStore();
 
   if (!loggedIn) {
-    return <LoginPage onLogin={() => setLoggedIn(true)} />;
+    return <LoginPage />;
   }
 
   return (

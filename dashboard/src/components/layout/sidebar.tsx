@@ -4,12 +4,12 @@ import {
   Calendar,
   FileText,
   Home,
+  LogOut,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
   PenTool,
   Search,
-  Settings,
   Users,
   X,
 } from "lucide-react";
@@ -99,8 +99,9 @@ function NavItem({
 }
 
 function SidebarInner({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
-  const { activeAgent, setActiveAgent, toggleSidebar, threads, activeThreadId, setActiveThread, deleteThread } = useUIStore();
+  const { activeAgent, setActiveAgent, toggleSidebar, threads, activeThreadId, setActiveThread, deleteThread, userName, logout } = useUIStore();
   const current = activeAgent || "home";
+  const initial = (userName || "D")[0].toUpperCase();
 
   const navigate = (id: string) => {
     setActiveAgent(id === "home" ? null : id);
@@ -197,10 +198,12 @@ function SidebarInner({ collapsed, onNavigate }: { collapsed: boolean; onNavigat
       <div className={cn("border-t border-border py-3", collapsed ? "px-2" : "px-3")}>
         {/* User */}
         {!collapsed && (
-          <div className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 hover:bg-muted cursor-pointer transition-colors duration-150">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full accent-gradient text-[10px] font-semibold text-white shrink-0">R</div>
-            <span className="text-[12px] font-medium text-muted-foreground">Revnth</span>
-            <Settings className="h-3.5 w-3.5 text-muted-foreground/40 ml-auto" />
+          <div className="flex items-center gap-2.5 rounded-lg px-2.5 py-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full accent-gradient text-[10px] font-semibold text-white shrink-0" style={{ color: "#FFF" }}>{initial}</div>
+            <span className="text-[12px] font-medium text-muted-foreground flex-1">{userName || "User"}</span>
+            <button type="button" onClick={logout} title="Sign out" className="h-6 w-6 flex items-center justify-center rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-muted transition-colors">
+              <LogOut className="h-3 w-3" />
+            </button>
           </div>
         )}
 

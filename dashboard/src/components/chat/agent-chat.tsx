@@ -49,29 +49,29 @@ function MarkdownContent({ content }: { content: string }) {
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       components={{
-        h1: ({ children }) => <h1 className="text-[18px] font-bold text-foreground mt-4 mb-2" style={{ fontFamily: "var(--font-serif)" }}>{children}</h1>,
-        h2: ({ children }) => <h2 className="text-[16px] font-bold text-foreground mt-4 mb-2" style={{ fontFamily: "var(--font-serif)" }}>{children}</h2>,
-        h3: ({ children }) => <h3 className="text-[15px] font-semibold text-foreground mt-3 mb-1.5">{children}</h3>,
-        p: ({ children }) => <p className="text-[14px] leading-[1.8] text-foreground/85 mb-3 last:mb-0">{children}</p>,
+        h1: ({ children }) => <h1 className="text-[20px] font-bold text-foreground mt-6 mb-3" style={{ fontFamily: "var(--font-serif)" }}>{children}</h1>,
+        h2: ({ children }) => <h2 className="text-[17px] font-bold text-foreground mt-6 mb-3" style={{ fontFamily: "var(--font-serif)" }}>{children}</h2>,
+        h3: ({ children }) => <h3 className="text-[15px] font-semibold text-foreground mt-5 mb-2">{children}</h3>,
+        p: ({ children }) => <p className="text-[14px] leading-[1.85] text-foreground/80 mb-4 last:mb-0">{children}</p>,
         strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
-        em: ({ children }) => <em className="italic text-foreground/70">{children}</em>,
-        ul: ({ children }) => <ul className="list-disc list-outside pl-5 mb-3 space-y-1">{children}</ul>,
-        ol: ({ children }) => <ol className="list-decimal list-outside pl-5 mb-3 space-y-1">{children}</ol>,
-        li: ({ children }) => <li className="text-[14px] leading-[1.7] text-foreground/85">{children}</li>,
-        blockquote: ({ children }) => <blockquote className="border-l-2 border-accent/30 pl-4 my-3 text-foreground/70 italic">{children}</blockquote>,
+        em: ({ children }) => <em className="italic text-foreground/65">{children}</em>,
+        ul: ({ children }) => <ul className="list-disc list-outside pl-5 mb-4 space-y-2">{children}</ul>,
+        ol: ({ children }) => <ol className="list-decimal list-outside pl-5 mb-4 space-y-2">{children}</ol>,
+        li: ({ children }) => <li className="text-[14px] leading-[1.8] text-foreground/80">{children}</li>,
+        blockquote: ({ children }) => <blockquote className="border-l-2 border-accent/20 pl-5 my-5 text-foreground/60 italic">{children}</blockquote>,
         code: ({ children, className }) => {
           const isBlock = className?.includes("language-");
           if (isBlock) {
-            return <pre className="bg-foreground/5 rounded-lg p-4 my-3 overflow-x-auto text-[12px] font-mono leading-relaxed">{children}</pre>;
+            return <pre className="bg-foreground/[0.03] rounded-xl p-5 my-4 overflow-x-auto text-[12px] font-mono leading-relaxed">{children}</pre>;
           }
-          return <code className="bg-foreground/5 text-accent px-1.5 py-0.5 rounded text-[13px] font-mono">{children}</code>;
+          return <code className="bg-foreground/[0.04] text-accent px-1.5 py-0.5 rounded-md text-[13px] font-mono">{children}</code>;
         },
-        hr: () => <hr className="border-border my-4" />,
+        hr: () => <div className="my-6" />,
         a: ({ children, href }) => <a href={href} className="text-accent underline underline-offset-2 hover:text-accent-hover">{children}</a>,
-        table: ({ children }) => <div className="overflow-x-auto my-3"><table className="w-full text-[13px] border-collapse">{children}</table></div>,
-        thead: ({ children }) => <thead className="bg-foreground/5">{children}</thead>,
-        th: ({ children }) => <th className="text-left px-3 py-2 font-semibold text-foreground border-b border-border">{children}</th>,
-        td: ({ children }) => <td className="px-3 py-2 text-foreground/80 border-b border-border/50">{children}</td>,
+        table: ({ children }) => <div className="overflow-x-auto my-4"><table className="w-full text-[13px] border-collapse">{children}</table></div>,
+        thead: ({ children }) => <thead className="bg-foreground/[0.03]">{children}</thead>,
+        th: ({ children }) => <th className="text-left px-3 py-2.5 font-semibold text-foreground border-b border-border">{children}</th>,
+        td: ({ children }) => <td className="px-3 py-2.5 text-foreground/75 border-b border-border/30">{children}</td>,
       }}
     >
       {content}

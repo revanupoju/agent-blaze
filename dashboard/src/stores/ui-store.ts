@@ -13,6 +13,11 @@ interface UIState {
   mobileMenuOpen: boolean;
   activeAgent: string | null;
   onboarded: boolean;
+  // Auth
+  loggedIn: boolean;
+  userName: string;
+  userEmail: string;
+  isDemo: boolean;
   // Chat history
   threads: ChatThread[];
   activeThreadId: string | null;
@@ -21,6 +26,8 @@ interface UIState {
   setMobileMenuOpen: (open: boolean) => void;
   setActiveAgent: (agent: string | null) => void;
   setOnboarded: (v: boolean) => void;
+  login: (name: string, email: string, isDemo: boolean) => void;
+  logout: () => void;
   createThread: (agent: string, firstMessage: string) => string;
   updateThread: (id: string, messages: { role: string; content: string }[]) => void;
   setActiveThread: (id: string | null) => void;
@@ -32,6 +39,10 @@ export const useUIStore = create<UIState>((set, get) => ({
   mobileMenuOpen: false,
   activeAgent: null,
   onboarded: false,
+  loggedIn: false,
+  userName: "",
+  userEmail: "",
+  isDemo: false,
   threads: [],
   activeThreadId: null,
 
@@ -39,6 +50,9 @@ export const useUIStore = create<UIState>((set, get) => ({
   setMobileMenuOpen: (open) => set({ mobileMenuOpen: open }),
   setActiveAgent: (agent) => set({ activeAgent: agent, activeThreadId: null }),
   setOnboarded: (v) => set({ onboarded: v }),
+
+  login: (name, email, isDemo) => set({ loggedIn: true, userName: name, userEmail: email, isDemo, onboarded: false }),
+  logout: () => set({ loggedIn: false, userName: "", userEmail: "", isDemo: false, activeAgent: null, activeThreadId: null, threads: [], onboarded: false }),
 
   createThread: (agent, firstMessage) => {
     const id = crypto.randomUUID().slice(0, 8);

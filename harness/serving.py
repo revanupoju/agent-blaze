@@ -156,7 +156,10 @@ OUTPUT FORMAT RULES (follow strictly):
 - For articles: use proper ## headings for sections
 - For community responses: use ### for each response with > blockquotes for original posts
 - For research: use ## sections with - bullet insights
-- Add blank lines between sections for readability
+- Add blank lines between paragraphs for breathing room
+- Never use horizontal rules (---), dividers, or separator lines
+- Never use emoji-heavy formatting or decorative characters like ━━━ or ════
+- Keep formatting clean and minimal — let whitespace do the work
 - Be warm, professional, and actionable in tone"""
 
 

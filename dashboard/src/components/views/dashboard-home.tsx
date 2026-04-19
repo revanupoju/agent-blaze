@@ -23,7 +23,8 @@ function useFormattedDate() {
 }
 
 export function DashboardHome() {
-  const { setActiveAgent } = useUIStore();
+  const { setActiveAgent, userName } = useUIStore();
+  const firstName = (userName || "there").split(" ")[0];
   const formattedDate = useFormattedDate();
   const [health, setHealth] = useState<any>(null);
   const [socialCount, setSocialCount] = useState(0);
@@ -58,7 +59,7 @@ export function DashboardHome() {
       {/* Greeting */}
       <div className="mb-10">
         <h1 className="text-[42px] text-foreground leading-[1.15]" style={{ fontFamily: "var(--font-serif)" }}>
-          Hey Revnth, what are we creating today?
+          Hey {firstName}, what are we creating today?
         </h1>
         <p className="mt-3 text-[16px] text-muted-foreground">
           {formattedDate}
