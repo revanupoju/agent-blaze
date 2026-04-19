@@ -230,45 +230,33 @@ def strip_promotional_language(text: str) -> str:
 # ── Self-Improvement (inspired by Karpathy's autoresearch) ──────
 
 def self_evaluate_and_improve(content: str, agent: str) -> str:
-    """Evaluate content quality and improve if below threshold.
-    Runs a generate→evaluate→improve loop, keeping the best version.
+    """Autoresearch-style self-improvement loop.
+    Evaluates → improves → keeps best version. Logs every experiment.
     """
-    from agents.llm_client import generate
+    from agents.self_improve import autoresearch_loop
+    from agents.llm_client import _call_cerebras, _call_ollama
 
-    eval_prompt = f"""Rate this marketing content 1-10 on: relatability, authenticity, emotional impact, specificity.
-Give ONE number (the average) and list 2 specific weaknesses.
-Format: SCORE: X/10 then WEAKNESSES: then the list.
-
-Content:
-{content[:1500]}"""
+    # Use failover for the improvement loop too
+    def llm_fn(sys, prompt, temp, max_tok):
+        try:
+            return _call_cerebras(sys, prompt, temp, max_tok)
+        except Exception:
+            try:
+                return _call_ollama(sys, prompt, temp, max_tok)
+            except Exception:
+                return ""
 
     try:
-        evaluation = generate(
-            "You are a strict content quality evaluator. Be harsh but specific.",
-            eval_prompt, temperature=0.3, max_tokens=300
+        system = AGENT_PERSONAS.get(agent, AGENT_PERSONAS["social"]) + OUTPUT_RULES
+        result = autoresearch_loop(
+            content=content,
+            system_prompt=system,
+            llm_fn=llm_fn,
+            max_iterations=2,  # Keep it fast for chat (2 rounds max)
+            threshold=7.0,
+            agent_name=agent,
         )
-
-        # Extract score
-        import re
-        score_match = re.search(r'(\d+(?:\.\d+)?)\s*/\s*10', evaluation)
-        score = float(score_match.group(1)) if score_match else 6.0
-
-        if score >= 7.0:
-            return content  # Good enough
-
-        # Below threshold — improve
-        improved = generate(
-            AGENT_PERSONAS.get(agent, AGENT_PERSONAS["social"]) + OUTPUT_RULES,
-            f"""This content scored {score}/10. The evaluation said:
-{evaluation}
-
-Rewrite it to fix the weaknesses. Make it more specific, more emotional, more human.
-Output ONLY the improved content:
-
-{content[:1500]}""",
-            temperature=0.9, max_tokens=3000
-        )
-        return improved if improved and len(improved) > 50 else content
+        return result["best_content"]
     except Exception:
         return content
 
@@ -572,6 +560,12 @@ async def get_memory():
 @app.get("/api/runs")
 async def get_runs():
     return {"runs": [orchestrator.get_run_summary(r) for r in orchestrator.runs], "count": len(orchestrator.runs)}
+
+@app.get("/api/experiments")
+async def experiments():
+    """View autoresearch experiment stats — how many iterations, scores, improvements."""
+    from agents.self_improve import get_experiment_stats
+    return get_experiment_stats()
 
 @app.get("/api/health")
 async def health():

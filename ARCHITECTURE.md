@@ -110,6 +110,39 @@ Cerebras Cloud / Ollama Local (LLM inference)
 3. **Self-Employed** — Kirana owners, auto drivers, street vendors
 4. **NTC Youth (21-35)** — First-time borrowers, no credit history
 
+## Self-Improvement Engine (Autoresearch Pattern)
+
+Inspired by [Karpathy's autoresearch](https://github.com/karpathy/autoresearch), every piece of generated content goes through a recursive improvement loop:
+
+```
+1. Generate content (the "experiment")
+2. Evaluate quality (score 1-10 on relatability, authenticity, emotion, specificity)
+3. If score >= 7 → keep (like val_bpb improving)
+4. If score < 7 → identify weaknesses → rewrite → re-evaluate
+5. Keep best version, discard regressions
+6. Log every experiment to experiment_log.jsonl
+```
+
+This means the agents don't just generate once — they **iterate on their own output** until it meets quality standards. The experiment log tracks:
+- Total experiments run
+- Keep vs discard ratio
+- Average quality score per agent
+- Improvement trends over time
+
+The loop caps at 2 iterations in chat (for speed) and 5 iterations in batch mode.
+
+## LLM Failover Chain
+
+Like Luna's 4-provider failover:
+
+```
+Cerebras (Qwen 3 235B / Llama 3.1 8B)
+    ↓ on 429 or error
+Ollama (local Llama 3.1)
+    ↓ on error
+Fail gracefully with message
+```
+
 ## Content Strategy
 
 - Content is **conversational first** — agents ask clarifying questions before generating
