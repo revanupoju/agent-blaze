@@ -66,22 +66,26 @@ export function DashboardHome() {
         </p>
       </div>
 
-      {/* Agent suggestion cards — like Goose */}
+      {/* Agent suggestion cards */}
       <div className="space-y-2 mb-10 max-w-[640px] mx-auto">
         {[
-          { id: "social", label: "Generate social media posts with Vortex", icon: PenTool },
-          { id: "seo", label: "Write an SEO article with Draft", icon: FileText },
-          { id: "community", label: "Create community responses with Rally", icon: Users },
-          { id: "research", label: "Research trending topics with Freq", icon: Search },
-          { id: "calendar", label: "Generate a weekly content calendar", icon: Calendar },
+          { id: "social", label: "Generate social media posts with Vortex", svg: "/vortex.svg", anim: "agent-icon-vortex" },
+          { id: "seo", label: "Write an SEO article with Draft", svg: "/draft.svg", anim: "agent-icon-draft" },
+          { id: "community", label: "Create community responses with Rally", svg: "/rally.svg", anim: "agent-icon-rally" },
+          { id: "research", label: "Research trending topics with Freq", svg: "/freq.svg", anim: "agent-icon-freq" },
+          { id: "calendar", label: "Generate a weekly content calendar", svg: null, anim: "" },
         ].map((item) => (
           <button
             key={item.id}
             type="button"
             onClick={() => setActiveAgent(item.id)}
-            className="w-full flex items-center gap-3.5 rounded-xl px-6 py-5 text-left text-[16px] text-foreground glass glow-accent hover:border-[var(--surface-border-prominent)] transition-all duration-200"
+            className="group w-full flex items-center gap-4 rounded-xl px-6 py-5 text-left text-[16px] text-foreground glass glow-accent hover:border-[var(--surface-border-prominent)] transition-all duration-200"
           >
-            <item.icon className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+            {item.svg ? (
+              <img src={item.svg} alt="" className={`h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70 transition-opacity ${item.anim}`} style={{ filter: "brightness(0) saturate(100%)" }} />
+            ) : (
+              <Calendar className="h-5 w-5 text-muted-foreground/40 group-hover:text-muted-foreground/70 shrink-0 transition-colors" />
+            )}
             <span>{item.label}</span>
           </button>
         ))}

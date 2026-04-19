@@ -36,10 +36,6 @@ export function LoginPage() {
             <Image src="/blaze-logo.png" alt="Blaze" width={32} height={32} />
             <span className="text-[22px]" style={{ fontFamily: "var(--font-serif)" }}>Blaze</span>
           </div>
-          <div className="flex items-center gap-2 ml-1">
-            <Image src="/af-logo.png" alt="Apollo Finvest" width={18} height={18} />
-            <p className="text-white/40 text-[12px]">by Apollo Finvest</p>
-          </div>
         </div>
 
         <div className="relative z-10 max-w-md">
@@ -51,13 +47,13 @@ export function LoginPage() {
           {/* Agent logos */}
           <div className="grid grid-cols-2 gap-4">
             {[
-              { name: "Vortex", desc: "Social Media", icon: "/vortex.svg" },
-              { name: "Draft", desc: "SEO Writer", icon: "/draft.svg" },
-              { name: "Rally", desc: "Community", icon: "/rally.svg" },
-              { name: "Freq", desc: "Research", icon: "/freq.svg" },
+              { name: "Vortex", desc: "Social Media", icon: "/vortex.svg", anim: "agent-icon-vortex" },
+              { name: "Draft", desc: "SEO Writer", icon: "/draft.svg", anim: "agent-icon-draft" },
+              { name: "Rally", desc: "Community", icon: "/rally.svg", anim: "agent-icon-rally" },
+              { name: "Freq", desc: "Research", icon: "/freq.svg", anim: "agent-icon-freq" },
             ].map((agent) => (
-              <div key={agent.name} className="flex items-center gap-3 bg-white/[0.04] rounded-xl px-4 py-3 border border-white/[0.06]">
-                <img src={agent.icon} alt={agent.name} className="h-5 w-5 invert opacity-70" />
+              <div key={agent.name} className="flex items-center gap-3 bg-white/[0.04] rounded-xl px-4 py-3 border border-white/[0.06] hover:bg-white/[0.07] hover:border-white/[0.1] transition-all duration-200 group">
+                <img src={agent.icon} alt={agent.name} className={`h-7 w-7 brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity ${agent.anim}`} />
                 <div>
                   <p className="text-[13px] font-medium text-white/90">{agent.name}</p>
                   <p className="text-[11px] text-white/35">{agent.desc}</p>
@@ -67,8 +63,8 @@ export function LoginPage() {
           </div>
         </div>
 
-        <div className="relative z-10 text-[11px] text-white/20">
-          Apollo Finvest Limited &middot; BSE Listed NBFC
+        <div className="relative z-10">
+          <Image src="/af-logo.png" alt="Apollo Finvest" width={130} height={32} className="brightness-0 invert opacity-30" />
         </div>
       </div>
 
@@ -84,7 +80,7 @@ export function LoginPage() {
             Welcome
           </h2>
           <p className="text-[14px] text-muted-foreground mb-8">
-            Sign in to access the marketing dashboard
+            Sign in to access Agent Blaze Dashboard
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
