@@ -78,11 +78,11 @@ export function DashboardHome() {
       {/* Agent suggestion cards */}
       <div className="space-y-2 mb-10 max-w-[640px] mx-auto">
         {[
-          { id: "social", label: "Generate social media posts with Vortex", svg: "/vortex.svg", anim: "agent-icon-vortex" },
-          { id: "seo", label: "Write an SEO article with Draft", svg: "/draft.svg", anim: "agent-icon-draft" },
-          { id: "community", label: "Create community responses with Rally", svg: "/rally.svg", anim: "agent-icon-rally" },
-          { id: "research", label: "Research trending topics with Freq", svg: "/freq.svg", anim: "agent-icon-freq" },
-          { id: "calendar", label: "Generate a weekly content calendar", svg: null, anim: "" },
+          { id: "social", label: "Chat with Vortex — Social Media content", svg: "/vortex.svg", anim: "agent-icon-vortex" },
+          { id: "seo", label: "Chat with Draft — SEO Articles & Blogs", svg: "/draft.svg", anim: "agent-icon-draft" },
+          { id: "community", label: "Chat with Rally — Community Responses", svg: "/rally.svg", anim: "agent-icon-rally" },
+          { id: "research", label: "Chat with Freq — Trends & Research", svg: "/freq.svg", anim: "agent-icon-freq" },
+          { id: "calendar", label: "Content Calendar — Plan your week", svg: null, anim: "" },
         ].map((item) => (
           <button
             key={item.id}
@@ -135,9 +135,18 @@ export function DashboardHome() {
         </button>
       </div>
       {pipelineStatus && (
-        <p className="text-[12px] text-muted-foreground text-center mt-3 max-w-[640px] mx-auto animate-fade-up">
-          {pipelineStatus}
-        </p>
+        <div className="text-center mt-3 max-w-[640px] mx-auto animate-fade-up">
+          <p className="text-[12px] text-muted-foreground">{pipelineStatus}</p>
+          {pipelineStatus.includes("Done") && (
+            <div className="flex items-center justify-center gap-3 mt-3">
+              <button onClick={() => setActiveAgent("social")} className="text-[12px] text-accent hover:underline">View Vortex outputs</button>
+              <span className="text-muted-foreground/30">·</span>
+              <button onClick={() => setActiveAgent("seo")} className="text-[12px] text-accent hover:underline">View Draft outputs</button>
+              <span className="text-muted-foreground/30">·</span>
+              <button onClick={() => setActiveAgent("community")} className="text-[12px] text-accent hover:underline">View Rally outputs</button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
