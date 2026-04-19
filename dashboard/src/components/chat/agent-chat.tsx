@@ -49,9 +49,9 @@ function MarkdownContent({ content }: { content: string }) {
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       components={{
-        h1: ({ children }) => <h1 className="text-[20px] font-bold text-foreground mt-6 mb-3" style={{ fontFamily: "var(--font-serif)" }}>{children}</h1>,
-        h2: ({ children }) => <h2 className="text-[17px] font-bold text-foreground mt-6 mb-3" style={{ fontFamily: "var(--font-serif)" }}>{children}</h2>,
-        h3: ({ children }) => <h3 className="text-[15px] font-semibold text-foreground mt-5 mb-2">{children}</h3>,
+        h1: ({ children }) => <h1 className="text-[26px] font-bold text-foreground mt-8 mb-4" style={{ fontFamily: "var(--font-serif)" }}>{children}</h1>,
+        h2: ({ children }) => <h2 className="text-[22px] font-bold text-foreground mt-7 mb-3" style={{ fontFamily: "var(--font-serif)" }}>{children}</h2>,
+        h3: ({ children }) => <h3 className="text-[18px] font-semibold text-foreground mt-6 mb-2" style={{ fontFamily: "var(--font-serif)" }}>{children}</h3>,
         p: ({ children }) => <p className="text-[14px] leading-[1.85] text-foreground/80 mb-4 last:mb-0">{children}</p>,
         strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
         em: ({ children }) => <em className="italic text-foreground/65">{children}</em>,
@@ -161,22 +161,135 @@ function useStreamingText(fullText: string, active: boolean, speed: number = 12)
   return { displayed, done };
 }
 
+// ── Source extraction & panel ──────────────────────────────────
+
+interface Source {
+  num: number;
+  title: string;
+  url: string;
+  domain: string;
+}
+
+function extractSources(content: string): { cleanContent: string; sources: Source[] } {
+  const sources: Source[] = [];
+
+  // Find the Sources section and extract links
+  const sourcesMatch = content.match(/\n(?:\*\*)?Sources(?:\*\*)?[\s\n]+([\s\S]*?)$/i);
+  let cleanContent = content;
+
+  if (sourcesMatch) {
+    cleanContent = content.slice(0, sourcesMatch.index || content.length).trim();
+    const sourceBlock = sourcesMatch[1];
+    const linkRegex = /\d+\.\s*\[([^\]]+)\]\(([^)]+)\)/g;
+    let match;
+    let num = 1;
+    while ((match = linkRegex.exec(sourceBlock)) !== null) {
+      const url = match[2];
+      let domain = "web";
+      try {
+        domain = new URL(url).hostname.replace("www.", "").replace("reddit.com", "reddit").replace("trends.google.com", "google trends");
+      } catch {}
+      sources.push({ num: num++, title: match[1], url, domain });
+    }
+  }
+
+  return { cleanContent, sources };
+}
+
+function SourcesPill({ sources }: { sources: Source[] }) {
+  const [open, setOpen] = useState(false);
+
+  if (sources.length === 0) return null;
+
+  const domainIcons: Record<string, string> = {
+    reddit: "🔴",
+    "google trends": "📈",
+    web: "🌐",
+  };
+
+  // Show first 3 domain icons
+  const uniqueDomains = [...new Set(sources.map(s => s.domain))].slice(0, 3);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-pill text-[12px] font-medium text-foreground/70 hover:text-foreground transition-colors mt-3"
+      >
+        {uniqueDomains.map(d => <span key={d}>{domainIcons[d] || "🌐"}</span>)}
+        <span>{sources.length} sources</span>
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/10 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div className="fixed right-0 top-0 z-50 h-full w-[380px] bg-background border-l border-border shadow-2xl overflow-y-auto animate-fade-up">
+            <div className="p-5 border-b border-border flex items-center justify-between sticky top-0 bg-background/90 backdrop-blur-sm">
+              <h3 className="text-[15px] font-semibold text-foreground">Sources for this research</h3>
+              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground text-[18px]">×</button>
+            </div>
+            <div className="p-4 space-y-3">
+              {sources.map((s) => (
+                <a
+                  key={s.num}
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block rounded-xl border border-border p-4 hover:bg-muted transition-colors group"
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-[11px]">{domainIcons[s.domain] || "🌐"}</span>
+                    <span className="text-[11px] text-muted-foreground">{s.domain}</span>
+                  </div>
+                  <p className="text-[13px] font-medium text-foreground group-hover:text-accent transition-colors leading-snug">
+                    {s.title}
+                  </p>
+                </a>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
 // ── Streaming message bubble ───────────────────────────────────
 
 function StreamingBubble({ content, color }: { content: string; color: string }) {
   const { displayed, done } = useStreamingText(content, true, 15);
+  const { cleanContent, sources } = extractSources(content);
+  const { cleanContent: displayedClean } = extractSources(displayed);
 
   return (
     <div className="glass rounded-2xl overflow-hidden">
       <div className="px-5 py-4">
-        <MarkdownContent content={displayed} />
+        <MarkdownContent content={done ? cleanContent : displayedClean} />
         {!done && <span className="inline-block w-1 h-4 bg-accent animate-pulse ml-0.5 -mb-0.5" />}
+        {done && sources.length > 0 && <SourcesPill sources={sources} />}
       </div>
       {done && (
         <div className="flex items-center justify-end px-3 py-2 border-t border-black/5">
           <CopyButton text={content} />
         </div>
       )}
+    </div>
+  );
+}
+
+function StaticBubble({ content }: { content: string }) {
+  const { cleanContent, sources } = extractSources(content);
+
+  return (
+    <div className="glass rounded-2xl overflow-hidden">
+      <div className="px-5 py-4">
+        <MarkdownContent content={cleanContent} />
+        {sources.length > 0 && <SourcesPill sources={sources} />}
+      </div>
+      <div className="flex items-center justify-end px-3 py-2 border-t border-black/5">
+        <CopyButton text={content} />
+      </div>
     </div>
   );
 }
@@ -320,14 +433,7 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
                       msg.streaming && msg.id === latestStreamId ? (
                         <StreamingBubble content={msg.content} color={config.color} />
                       ) : (
-                        <div className="glass rounded-2xl overflow-hidden">
-                          <div className="px-5 py-4">
-                            <MarkdownContent content={msg.content} />
-                          </div>
-                          <div className="flex items-center justify-end px-3 py-2 border-t border-black/5">
-                            <CopyButton text={msg.content} />
-                          </div>
-                        </div>
+                        <StaticBubble content={msg.content} />
                       )
                     ) : (
                       <span>{msg.content}</span>
