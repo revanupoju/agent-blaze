@@ -174,6 +174,59 @@ No horizontal rules. No decorative characters. No raw JSON. Minimal emoji.
 Let whitespace do the work."""
 
 
+# ── Promotional Language Filter ─────────────────────────────────
+
+def strip_promotional_language(text: str) -> str:
+    """Remove obvious promotional/ad language that the LLM keeps inserting."""
+    import re
+
+    # Phrases that should NEVER appear in authentic content
+    banned_phrases = [
+        r"[Gg]ame-[Cc]hanging",
+        r"[Rr]evolutionary\s+solution",
+        r"[Gg]et [Ss]tarted [Tt]oday",
+        r"[Aa]pply\s+(now|today|for a loan today)",
+        r"[Dd]ownload\s+(now|today|the app)",
+        r"[Ss]ign up\s+(now|today)",
+        r"[Dd]on'?t\s+wait",
+        r"[Ll]imited\s+(time|offer|period)",
+        r"[Ww]hat are you waiting for",
+        r"[Tt]ake control of your financial future",
+        r"[Bb]reak(ing)? the cycle",
+        r"[Aa]chieve your financial goals",
+        r"[Bb]uild a better future",
+        r"[Hh]assle[\s-]free",
+        r"[Ss]eamless\s+experience",
+        r"[Cc]ompetitive\s+interest\s+rates",
+        r"[Ff]aster [Aa]pplication [Pp]rocess",
+        r"[Ll]ower [Ii]nterest [Rr]ates",
+        r"[Mm]ore [Ff]lexible",
+        r"[Ii]nnovative\s+(loan|solution|product)",
+        r"[Cc]atering to the needs",
+        r"to the rescue",
+        r"[Aa]pollo Cash'?s?\s+loan\s+without",
+        r"[Ii]ntroducing\s+",
+    ]
+
+    for pattern in banned_phrases:
+        text = re.sub(pattern + r"[.!,;:]*\s*", "", text)
+
+    # Remove lines that are pure CTAs
+    lines = text.split("\n")
+    filtered = []
+    for line in lines:
+        stripped = line.strip().lower()
+        if any(cta in stripped for cta in [
+            "get started", "apply now", "apply today", "download now",
+            "sign up", "don't wait", "what are you waiting",
+            "ready to break", "take control",
+        ]):
+            continue
+        filtered.append(line)
+
+    return "\n".join(filtered)
+
+
 # ── Self-Improvement (inspired by Karpathy's autoresearch) ──────
 
 def self_evaluate_and_improve(content: str, agent: str) -> str:
@@ -330,8 +383,9 @@ Present insights based on what you actually see in the data."""
 
     response = generate(system, prompt, temperature=0.8, max_tokens=4000)
 
-    # Self-improvement: evaluate and improve if it's a generation request
-    if is_generation and len(response) > 200:
+    # Post-processing: strip promotional language and self-improve
+    if (is_generation or is_research) and len(response) > 200:
+        response = strip_promotional_language(response)
         response = self_evaluate_and_improve(response, req.agent)
 
     return {"response": response}
