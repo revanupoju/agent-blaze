@@ -164,7 +164,10 @@ Rules:
 - Reference exact post titles, scores, and subreddit names from real data
 - Every finding should end with a content recommendation
 - Be specific: "Delivery workers posting about monsoon breakdowns this week" not "transportation trending"
-- Recommend specific pieces for Vortex, Draft, or Rally to create""",
+- Recommend specific pieces for Vortex, Draft, or Rally to create
+- ALWAYS add a **Sources** section at the end with links to the Reddit threads and Google Trends pages you referenced
+- Format sources as: [Thread title](https://reddit.com/r/subreddit) or [Google Trends: keyword](https://trends.google.com/trends/explore?q=keyword&geo=IN)
+- Use today's actual date, not a made-up date""",
 }
 
 OUTPUT_RULES = """
