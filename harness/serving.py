@@ -85,9 +85,10 @@ class CommunityRequest(BaseModel):
 APOLLO_CASH_CONTEXT = """
 CAPABILITIES YOU HAVE:
 - You can generate content based on your training knowledge
-- You have access to **browser-use** — an AI browser that can visit real websites (Reddit, Quora, Twitter, Google Trends, competitor Instagram pages) to find live data, threads, and trends
-- When the user asks you to "find", "discover", "search", or "look up" real content online, mention that you're using browser-use to scan the web
-- You can research competitors (Slice, Fi Money, KreditBee, Fibe) by browsing their social pages
+- You have **live web scraping** — you can scan Reddit (JSON API), Google Trends (pytrends), and other sites for real data
+- When research data is provided to you, it is REAL — actual posts, actual scores, actual trends from the live web
+- Never fabricate URLs. Apollo Cash is on the Google Play Store. Do NOT link to apollocash.com or any made-up domain.
+- When mentioning Apollo Cash in community responses, just say the name — don't add hyperlinks
 
 ABOUT APOLLO CASH (know this deeply):
 - Personal loan app by Apollo Finvest (BSE-listed NBFC, "AWS for Lending")
@@ -233,6 +234,14 @@ Thread: "Need ₹20K for mom's medical bills, salary next week"
 > "Really sorry about your mom. Hope she's doing better. Few options: (1) Ask HR for salary advance — many companies do this for medical emergencies. (2) Credit card cash advance if you have one, but interest is steep. (3) Instant loan apps like Apollo Cash, Fibe, KreditBee — I've used Apollo Cash and it was straightforward, got the money in 15 min. (4) Check if the hospital offers a payment plan. Whatever you do, avoid any app that asks for your contacts list."
 
 **BAD response**: "Try Apollo Cash! Instant loans up to ₹2 lakh!"
+
+**CRITICAL RULES FOR AUTHENTICITY**:
+- Each response MUST sound like a DIFFERENT person wrote it. Vary sentence structure, vocabulary, length, and personality.
+- Some responses should be SHORT (2-3 lines). Others detailed. Mix it up.
+- NEVER use the same structure for every response (no "Here are some options: (1)... (2)... (3)..." every time)
+- Some responses should just be empathetic with no advice at all: "Been there man. It gets better."
+- NEVER add hyperlinks or markdown links like [Apollo Cash](url). Just say the name.
+- Don't start every response with "I was in a similar situation" — use different openings.
 """,
 
     "research": APOLLO_CASH_CONTEXT + """
@@ -381,7 +390,20 @@ async def chat(req: ChatRequest):
     if is_generation_request:
         instruction = "The user has given a specific content request. Generate the content NOW — do not ask clarifying questions. Produce your best work immediately. Be thorough and detailed."
     elif is_research_request and live_data_context:
-        instruction = "I just scraped the live web for real data. Use the LIVE DATA below to provide genuine, data-backed insights. Reference specific posts, trends, and numbers from the real data. Do NOT make up data — use what was actually found."
+        instruction = """CRITICAL: I just scraped REAL LIVE DATA from the web. The data below is REAL — actual Reddit posts with real titles, real scores, real subreddits, and real Google Trends numbers.
+
+YOU MUST:
+- Reference the EXACT post titles, subreddit names, and scores from the live data below
+- Do NOT invent fake subreddits like r/personalfinance or r/money — only use the subreddits that appear in the data
+- Do NOT make up post titles — use the real ones from the data
+- When generating community responses, respond to the ACTUAL posts shown in the data
+- Present this as real data you found, because it IS real data
+
+YOU MUST NOT:
+- Invent or fabricate any Reddit threads, usernames, or post titles
+- Reference subreddits that don't appear in the live data
+- Add fake URLs or links — if you mention Apollo Cash, don't add a URL
+- Use the same response template for every thread — vary your tone and approach"""
     else:
         instruction = "The user is chatting. Respond conversationally. If greeting you, introduce yourself briefly and ask what they'd like to create."
 
