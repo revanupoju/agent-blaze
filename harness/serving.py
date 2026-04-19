@@ -281,7 +281,6 @@ async def chat(req: ChatRequest):
     base_system = AGENT_PERSONAS.get(req.agent, AGENT_PERSONAS["social"])
     system = base_system + OUTPUT_RULES
 
-    from agents.llm_client import generate
     import os
 
     # Override model if specified
@@ -293,6 +292,20 @@ async def chat(req: ChatRequest):
             if parts[0] == "ollama":
                 os.environ["OLLAMA_MODEL"] = parts[1]
 
+    # LLM call with failover chain (Luna pattern: Cerebras → Groq → Ollama)
+    def llm_call(system_prompt: str, user_prompt: str, temp: float = 0.8, max_tok: int = 4000) -> str:
+        from agents.llm_client import _call_cerebras, _call_ollama
+        providers = [
+            ("cerebras", _call_cerebras),
+            ("ollama", _call_ollama),
+        ]
+        for name, fn in providers:
+            try:
+                return fn(system_prompt, user_prompt, temp, max_tok)
+            except Exception as e:
+                continue
+        return "All providers failed. Please try again."
+
     # Build conversation
     conversation_parts = []
     for msg in req.messages:
@@ -301,6 +314,11 @@ async def chat(req: ChatRequest):
     conversation_text = "\n".join(conversation_parts)
 
     last_msg = req.messages[-1].content if req.messages else ""
+
+    # Intent classification (Luna pattern) — classify and tune temperature
+    word_count = len(last_msg.split())
+    is_simple = word_count < 8 and not any(kw in last_msg.lower() for kw in ["generate","create","write","find","research"])
+    temperature = 0.3 if is_simple else 0.7  # Simple = low temp, creative = higher
 
     # Detect intent
     is_generation = len(last_msg.split()) >= 5 and any(
@@ -350,7 +368,7 @@ Subreddit: r/{t.get('subreddit', '')}
 {"Mention Apollo Cash naturally as ONE option among others." if mention_apollo else "Do NOT mention Apollo Cash. Give pure helpful advice only."}
 Keep it {"short (2-3 sentences)" if i % 2 == 0 else "detailed (4-6 sentences)"}. No URLs. No numbered lists for every response — vary the style."""
 
-                        reply = generate(system, reply_prompt, temperature=0.9, max_tokens=400)
+                        reply = llm_call(system, reply_prompt, temp=0.9, max_tokens=400)
                         reply = strip_promotional_language(reply)
                         parts.append(f"**My response:**\n{reply}")
                         parts.append(f"\n*Strategy: {'Mentions Apollo Cash as one option' if mention_apollo else 'Pure advice — trust building, no brand mention'}*\n")
@@ -398,7 +416,7 @@ Keep it {"short (2-3 sentences)" if i % 2 == 0 else "detailed (4-6 sentences)"}.
 
 Give 3-4 actionable content recommendations for Apollo Cash marketing. What should Vortex, Draft, and Rally create based on what's trending? Be specific."""
 
-                insights = generate(system, insight_prompt, temperature=0.8, max_tokens=1000)
+                insights = llm_call(system, insight_prompt, temp=0.7, max_tokens=1000)
                 parts.append("\n### Content Recommendations\n")
                 parts.append(insights)
 
@@ -420,7 +438,7 @@ Give 3-4 actionable content recommendations for Apollo Cash marketing. What shou
 
 {instruction}"""
 
-    response = generate(system, prompt, temperature=0.8, max_tokens=4000)
+    response = llm_call(system, prompt, temp=temperature, max_tok=4000)
 
     if is_generation and len(response) > 200:
         response = strip_promotional_language(response)
