@@ -318,73 +318,111 @@ async def chat(req: ChatRequest):
         ]
     ) and len(last_msg.split()) >= 4
 
-    # Fetch live web data for research requests
-    live_context = ""
+    # For community/research: fetch REAL data and build response with Python (don't trust LLM to format it)
     if is_research:
         try:
             from agents.web_scraper import research_live, discover_threads
 
-            if any(kw in last_msg.lower() for kw in ["thread", "discover", "find", "reddit", "community", "respond"]):
+            is_community = any(kw in last_msg.lower() for kw in ["thread", "discover", "find", "reddit", "community", "respond", "reply"])
+
+            if is_community:
                 data = discover_threads()
-                if data.get("threads"):
-                    lines = [f"\n\n**LIVE REDDIT DATA (scraped just now, {data['discovered']} threads found):**\n"]
-                    for t in data["threads"][:12]:
-                        if "error" not in t:
-                            lines.append(f"- **\"{t['title']}\"** — r/{t.get('subreddit','')} — {t.get('score',0)} upvotes, {t.get('num_comments',0)} comments")
-                            if t.get("body"):
-                                lines.append(f"  Post: {t['body'][:200]}")
-                    live_context = "\n".join(lines)
+                threads = [t for t in data.get("threads", []) if "error" not in t and t.get("title")][:5]
+
+                if threads:
+                    # Build response with REAL data — Python formats the structure, LLM only writes replies
+                    parts = [f"I scanned Reddit and found **{data['discovered']} real threads**. Here are the top {len(threads)} with my responses:\n"]
+
+                    for i, t in enumerate(threads):
+                        parts.append(f"### Thread {i+1} — r/{t.get('subreddit', '')}")
+                        parts.append(f"**\"{t['title']}\"** — {t.get('score', 0)} upvotes, {t.get('num_comments', 0)} comments")
+                        if t.get("author"):
+                            parts.append(f"*by u/{t['author']}*")
+                        if t.get("body"):
+                            parts.append(f"\n> {t['body'][:250]}{'...' if len(t.get('body','')) > 250 else ''}\n")
+
+                        # Generate ONLY the reply using LLM
+                        mention_apollo = i < 3  # First 3 mention Apollo, last 2 pure advice
+                        reply_prompt = f"""Write a single Reddit reply to this post. Sound like a real person, not a brand.
+Post title: "{t['title']}"
+Post body: "{t.get('body', '')[:300]}"
+Subreddit: r/{t.get('subreddit', '')}
+{"Mention Apollo Cash naturally as ONE option among others." if mention_apollo else "Do NOT mention Apollo Cash. Give pure helpful advice only."}
+Keep it {"short (2-3 sentences)" if i % 2 == 0 else "detailed (4-6 sentences)"}. No URLs. No numbered lists for every response — vary the style."""
+
+                        reply = generate(system, reply_prompt, temperature=0.9, max_tokens=400)
+                        reply = strip_promotional_language(reply)
+                        parts.append(f"**My response:**\n{reply}")
+                        parts.append(f"\n*Strategy: {'Mentions Apollo Cash as one option' if mention_apollo else 'Pure advice — trust building, no brand mention'}*\n")
+
+                    response = "\n".join(parts)
+                    return {"response": response}
+
             else:
-                topic = " ".join(w for w in last_msg.lower().split() if w not in ["research","trending","analyze","what","are","people","about","on","right","now","the"])
+                # Research / trends
+                topic = " ".join(w for w in last_msg.lower().split() if w not in ["research","trending","analyze","what","are","people","about","on","right","now","the","discuss","discussing"])
                 if len(topic) < 5:
                     topic = "personal loan India"
                 data = research_live(topic)
 
-                lines = ["\n\n**LIVE WEB DATA (scraped just now):**\n"]
+                # Build research response with Python
+                parts = [f"## Live Research Results\n*Scanned Reddit and Google Trends just now*\n"]
 
                 reddit_posts = data.get("reddit", {}).get("posts", [])
                 if reddit_posts:
-                    lines.append(f"**Reddit** ({len(reddit_posts)} posts):")
-                    for p in reddit_posts[:10]:
-                        if "error" not in p:
-                            lines.append(f"- \"{p['title']}\" — r/{p.get('subreddit','')} — {p.get('score',0)} upvotes")
+                    real_posts = [p for p in reddit_posts if "error" not in p][:10]
+                    parts.append(f"### Reddit ({len(real_posts)} posts found)\n")
+                    for p in real_posts:
+                        parts.append(f"- **\"{p['title']}\"** — r/{p.get('subreddit','')} ({p.get('score',0)} upvotes, {p.get('num_comments',0)} comments)")
+                    parts.append("")
 
                 trends = data.get("google_trends", {}).get("trends", {})
                 if trends:
-                    lines.append("\n**Google Trends (India, last 7 days):**")
+                    parts.append("### Google Trends (India, last 7 days)\n")
                     for kw, d in trends.items():
-                        lines.append(f"- \"{kw}\": {d.get('trend','stable')} (interest score: {d.get('current','N/A')}/100)")
+                        parts.append(f"- **{kw}**: {d.get('trend','stable')} (interest: {d.get('current','N/A')}/100)")
+                    parts.append("")
 
                 related = data.get("google_trends", {}).get("related_queries", {})
                 if related:
                     for kw, r in related.items():
                         if r.get("rising_queries"):
-                            lines.append(f"- Rising searches for \"{kw}\": {', '.join(r['rising_queries'][:4])}")
+                            parts.append(f"- Rising searches for **{kw}**: {', '.join(r['rising_queries'][:5])}")
+                    parts.append("")
 
-                live_context = "\n".join(lines)
+                # Now ask LLM for insights BASED on the real data
+                data_summary = "\n".join(parts)
+                insight_prompt = f"""Based on this REAL data I just scraped:
+
+{data_summary}
+
+Give 3-4 actionable content recommendations for Apollo Cash marketing. What should Vortex, Draft, and Rally create based on what's trending? Be specific."""
+
+                insights = generate(system, insight_prompt, temperature=0.8, max_tokens=1000)
+                parts.append("\n### Content Recommendations\n")
+                parts.append(insights)
+
+                response = "\n".join(parts)
+                response = strip_promotional_language(response)
+                return {"response": response}
+
         except Exception as e:
-            live_context = f"\n\n(Web scraping error: {str(e)[:100]})"
+            pass  # Fall through to normal chat
 
-    # Build instruction
+    # Normal chat flow (greetings, generation requests, etc.)
     if is_generation:
         instruction = "Generate the content NOW. Do not ask questions. Be thorough, specific, and emotional."
-    elif is_research and live_context:
-        instruction = """USE THE LIVE DATA BELOW. These are REAL posts from Reddit and REAL trends from Google.
-Reference the EXACT titles, subreddits, and scores shown. Do NOT invent data.
-Present insights based on what you actually see in the data."""
     else:
         instruction = "Respond conversationally. If greeting, introduce yourself briefly and ask what they'd like to create."
 
     prompt = f"""Conversation:
 {conversation_text}
-{live_context}
 
 {instruction}"""
 
     response = generate(system, prompt, temperature=0.8, max_tokens=4000)
 
-    # Post-processing: strip promotional language and self-improve
-    if (is_generation or is_research) and len(response) > 200:
+    if is_generation and len(response) > 200:
         response = strip_promotional_language(response)
         response = self_evaluate_and_improve(response, req.agent)
 
