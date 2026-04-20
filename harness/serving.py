@@ -386,6 +386,7 @@ async def chat(req: ChatRequest):
             if is_community:
                 import re as _re
                 from agents.web_scraper import scrape_reddit, search_reddit
+                print(f"[RALLY] is_community=True, last_msg={last_msg[:50]}")
 
                 # Parse user's message for specific subreddit and count
                 sub_match = _re.search(r'r/(\w+)|/r/(\w+)|subreddit\s+(\w+)', last_msg)
@@ -395,9 +396,11 @@ async def chat(req: ChatRequest):
                 if sub_match:
                     # User asked for a specific subreddit
                     specific_sub = sub_match.group(1) or sub_match.group(2) or sub_match.group(3)
-                    # Scrape that specific subreddit
+                    print(f"[RALLY] Scraping specific sub: r/{specific_sub}, count={requested_count}")
                     raw_posts = scrape_reddit(specific_sub, limit=requested_count, sort="new")
+                    print(f"[RALLY] Got {len(raw_posts)} posts from Reddit")
                     threads = [t for t in raw_posts if "error" not in t and t.get("title")][:requested_count]
+                    print(f"[RALLY] Filtered to {len(threads)} valid threads")
                 else:
                     # Default: discover across Indian finance subreddits
                     data = discover_threads()
@@ -518,7 +521,9 @@ Give 3-4 actionable content recommendations for Apollo Cash marketing. What shou
                 return {"response": response}
 
         except Exception as e:
-            pass  # Fall through to normal chat
+            print(f"[RALLY/FREQ ERROR] {str(e)}")
+            # Return honest error instead of falling through to LLM fabrication
+            return {"response": f"**Research error:** {str(e)[:200]}\n\nThe live web scraper hit an issue. Try again, or try a different subreddit."}
 
     # Dispatch agent: handle posting commands
     if req.agent == "dispatch":
