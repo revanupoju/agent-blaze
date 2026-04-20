@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Calendar,
   FileText,
   Home,
   LogOut,
@@ -10,6 +9,7 @@ import {
   PanelLeftOpen,
   PenTool,
   Search,
+  Send,
   Users,
   X,
 } from "lucide-react";
@@ -70,7 +70,7 @@ const agentNav = [
 ] as const;
 
 const workspaceNav = [
-  { label: "Publish", id: "calendar", icon: Calendar },
+  { label: "Publish", id: "calendar", icon: Send },
 ] as const;
 
 const allNav = [...coreNav, ...agentNav, ...workspaceNav];

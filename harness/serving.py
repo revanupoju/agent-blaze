@@ -655,6 +655,66 @@ async def publish_log():
     return {"entries": log, "count": len(log)}
 
 
+# ── Postiz Integration ───────────────────────────────────────────
+
+POSTIZ_URL = "http://72.60.200.15:4007/api/public/v1"
+POSTIZ_KEY = "6a0740fd2d9dbb45a5a4c3673a42e34c0d768766db6287140bda0132d0d1724c"
+
+@app.get("/api/postiz/status")
+async def postiz_status():
+    """Check Postiz connection status."""
+    import requests
+    try:
+        r = requests.get(f"{POSTIZ_URL}/is-connected", headers={"Authorization": POSTIZ_KEY}, timeout=5)
+        return r.json()
+    except Exception as e:
+        return {"connected": False, "error": str(e)}
+
+@app.get("/api/postiz/channels")
+async def postiz_channels():
+    """Get connected social channels."""
+    import requests
+    try:
+        r = requests.get(f"{POSTIZ_URL}/integrations", headers={"Authorization": POSTIZ_KEY}, timeout=5)
+        return {"channels": r.json()}
+    except Exception as e:
+        return {"channels": [], "error": str(e)}
+
+class PostizPostRequest(BaseModel):
+    content: str
+    platforms: list[str] = []
+    schedule: str = ""
+
+@app.post("/api/postiz/post")
+async def postiz_create_post(req: PostizPostRequest):
+    """Create a post via Postiz API — schedules or publishes immediately."""
+    import requests
+    try:
+        payload = {
+            "content": req.content,
+            "platforms": req.platforms,
+        }
+        if req.schedule:
+            payload["date"] = req.schedule
+        r = requests.post(f"{POSTIZ_URL}/posts", headers={"Authorization": POSTIZ_KEY, "Content-Type": "application/json"}, json=payload, timeout=10)
+        return r.json()
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/postiz/posts")
+async def postiz_get_posts():
+    """Get scheduled/published posts."""
+    import requests
+    from datetime import datetime, timedelta
+    try:
+        start = datetime.now().strftime("%Y-%m-%dT00:00:00Z")
+        end = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%dT23:59:59Z")
+        r = requests.get(f"{POSTIZ_URL}/posts?startDate={start}&endDate={end}", headers={"Authorization": POSTIZ_KEY}, timeout=5)
+        return {"posts": r.json()}
+    except Exception as e:
+        return {"posts": [], "error": str(e)}
+
+
 @app.get("/api/experiments")
 async def experiments():
     """View autoresearch experiment stats — how many iterations, scores, improvements."""
