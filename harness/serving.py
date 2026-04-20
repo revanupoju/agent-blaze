@@ -984,9 +984,8 @@ async def get_postiz_cookie():
 
 @app.get("/api/connect/{provider}")
 async def connect_channel(provider: str):
-    """Get OAuth URL for a social provider — user clicks this to connect."""
+    """Get OAuth URL for a social provider — returns JSON with the URL."""
     import requests
-    from fastapi.responses import RedirectResponse
     cookie = await get_postiz_cookie()
     if not cookie:
         return {"error": "Could not authenticate with Postiz"}
@@ -996,9 +995,9 @@ async def connect_channel(provider: str):
     if r.ok:
         data = r.json()
         if "url" in data:
-            return RedirectResponse(url=data["url"])
-        return {"error": "No OAuth URL returned", "data": data}
-    return {"error": f"Postiz returned {r.status_code}", "body": r.text}
+            return {"url": data["url"]}
+        return {"error": "No OAuth URL returned"}
+    return {"error": f"Postiz returned {r.status_code}"}
 
 @app.get("/api/experiments")
 async def experiments():
