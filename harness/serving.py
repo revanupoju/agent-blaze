@@ -612,12 +612,58 @@ Give 3-4 actionable content recommendations for Apollo Cash marketing. What shou
             # Return honest error instead of falling through to LLM fabrication
             return {"response": f"**Research error:** {str(e)[:200]}\n\nThe live web scraper hit an issue. Try again, or try a different subreddit."}
 
-    # Dispatch agent: handle posting commands
+    # Dispatch agent: handle connect + posting commands
     if req.agent == "dispatch":
+        import requests as http_requests
+
+        # Handle channel connection requests
+        is_connect = any(kw in last_msg.lower() for kw in ["connect", "add channel", "link", "set up", "setup"])
+        if is_connect:
+            # Detect which platform
+            platforms = {
+                "x": ["x", "twitter", "tweet"],
+                "linkedin": ["linkedin"],
+                "linkedin-page": ["linkedin page"],
+                "facebook": ["facebook", "fb"],
+                "instagram": ["instagram", "insta", "ig"],
+                "reddit": ["reddit"],
+                "youtube": ["youtube", "yt"],
+                "threads": ["threads"],
+                "tiktok": ["tiktok"],
+                "pinterest": ["pinterest"],
+            }
+            detected = None
+            for provider, keywords in platforms.items():
+                if any(kw in last_msg.lower() for kw in keywords):
+                    detected = provider
+                    break
+
+            if detected:
+                try:
+                    cookie = await get_postiz_cookie()
+                    if cookie:
+                        r = http_requests.get(
+                            f"{POSTIZ_INTERNAL}/integrations/social/{detected}",
+                            headers={"Authorization": f"Bearer {cookie}", "Cookie": f"auth={cookie}"},
+                            timeout=10
+                        )
+                        if r.ok:
+                            data = r.json()
+                            if "url" in data:
+                                return {"response": f"**Ready to connect {detected.upper()}!**\n\n[Click here to authorize {detected.upper()}]({data['url']})\n\nThis will open {detected.upper()}'s login page. Authorize Agent Blaze, and you'll be redirected back. Your channel will appear automatically."}
+                            else:
+                                return {"response": f"Couldn't get OAuth URL for {detected}. Make sure the API keys are configured."}
+                    return {"response": "Could not authenticate with the publishing service. Please try again."}
+                except Exception as e:
+                    return {"response": f"Error connecting to {detected}: {str(e)[:100]}"}
+            else:
+                available = "X (Twitter), Instagram, Facebook, LinkedIn, Reddit, YouTube, TikTok, Threads, Pinterest"
+                return {"response": f"Which platform would you like to connect? Just say something like:\n\n- *Connect my Twitter*\n- *Add Instagram*\n- *Link my LinkedIn*\n\n**Available:** {available}"}
+
+        # Handle posting commands
         is_post_command = any(kw in last_msg.lower() for kw in ["post", "publish", "schedule", "send", "share", "confirm", "yes"])
         if is_post_command and len(last_msg.split()) >= 3:
             try:
-                import requests as http_requests
                 # Check connected channels
                 ch_resp = http_requests.get(f"{POSTIZ_URL}/integrations", headers={"Authorization": POSTIZ_KEY}, timeout=5)
                 channels = ch_resp.json() if ch_resp.ok else []
@@ -641,7 +687,7 @@ Give 3-4 actionable content recommendations for Apollo Cash marketing. What shou
                     else:
                         response = f"**Post created** (queued for publishing)\n\nContent will be sent to: {channel_names}\n\nCheck the Publish tab to verify the schedule."
                 else:
-                    response = "**No channels connected yet.**\n\nGo to the **Publish** tab → click **Add Channel** to connect Instagram, Twitter, Facebook, etc.\n\nOnce connected, come back and I'll post your content."
+                    response = "**No channels connected yet.**\n\nTell me which platform to connect — e.g. *\"connect my Twitter\"* or *\"add Instagram\"*"
 
                 return {"response": response}
             except Exception as e:
@@ -908,6 +954,47 @@ async def postiz_get_posts():
     except Exception as e:
         return {"posts": [], "error": str(e)}
 
+
+POSTIZ_INTERNAL = "https://srv1317892.hstgr.cloud/api"
+POSTIZ_AUTH_COOKIE = ""  # Will be set after login
+
+async def get_postiz_cookie():
+    """Login to Postiz and get auth cookie for internal API calls."""
+    global POSTIZ_AUTH_COOKIE
+    if POSTIZ_AUTH_COOKIE:
+        return POSTIZ_AUTH_COOKIE
+    import requests
+    r = requests.post(f"{POSTIZ_INTERNAL}/auth/login",
+        json={"email": "demo@agentblaze.com", "password": "Blaze2026!", "provider": "LOCAL"},
+        timeout=10)
+    if r.ok:
+        POSTIZ_AUTH_COOKIE = r.headers.get("auth", "") or r.cookies.get("auth", "")
+        # Also check set-cookie header
+        for cookie in r.cookies:
+            if cookie.name == "auth":
+                POSTIZ_AUTH_COOKIE = cookie.value
+        # Try from response header (NOT_SECURED mode)
+        if not POSTIZ_AUTH_COOKIE and "auth" in r.headers:
+            POSTIZ_AUTH_COOKIE = r.headers["auth"]
+    return POSTIZ_AUTH_COOKIE
+
+@app.get("/api/connect/{provider}")
+async def connect_channel(provider: str):
+    """Get OAuth URL for a social provider — user clicks this to connect."""
+    import requests
+    from fastapi.responses import RedirectResponse
+    cookie = await get_postiz_cookie()
+    if not cookie:
+        return {"error": "Could not authenticate with Postiz"}
+    r = requests.get(f"{POSTIZ_INTERNAL}/integrations/social/{provider}",
+        headers={"Authorization": f"Bearer {cookie}", "Cookie": f"auth={cookie}"},
+        timeout=10)
+    if r.ok:
+        data = r.json()
+        if "url" in data:
+            return RedirectResponse(url=data["url"])
+        return {"error": "No OAuth URL returned", "data": data}
+    return {"error": f"Postiz returned {r.status_code}", "body": r.text}
 
 @app.get("/api/experiments")
 async def experiments():

@@ -476,14 +476,13 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
                 <div className="w-full max-w-xl mb-6">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-[12px] font-medium text-muted-foreground/60 uppercase tracking-wider">Connected Channels</p>
-                    <a
-                      href="/connect.html"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => send("Connect my Twitter")}
                       className="flex items-center gap-1 text-[11px] text-accent hover:underline"
                     >
                       <span className="text-[11px]">+</span> Add Channel
-                    </a>
+                    </button>
                   </div>
                   <DispatchChannels refreshKey={channelRefresh} />
                 </div>
