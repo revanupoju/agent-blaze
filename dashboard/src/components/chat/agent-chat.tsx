@@ -366,12 +366,17 @@ function DispatchChannels({ refreshKey }: { refreshKey: number }) {
       {/* Connected channels */}
       {channels.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {channels.map((ch: any, i: number) => (
-            <div key={i} className="flex items-center gap-2 glass-pill px-3 py-1.5 rounded-lg">
-              <CheckCircle2 className="h-3 w-3 text-green-500" />
-              <span className="text-[12px] font-medium text-foreground">{ch.name || ch.providerName || "Channel"}</span>
-            </div>
-          ))}
+          {channels.map((ch: any, i: number) => {
+            const pid = (ch.providerIdentifier || ch.providerName || "").toLowerCase();
+            const platform = SOCIAL_PLATFORMS.find(p => pid.includes(p.id));
+            return (
+              <div key={i} className="flex items-center gap-2 glass-pill px-3 py-1.5 rounded-lg">
+                {platform ? platform.icon(`h-3.5 w-3.5 ${platform.color}`) : <CheckCircle2 className="h-3 w-3 text-green-500" />}
+                <span className="text-[12px] font-medium text-foreground">{ch.name || ch.providerName || "Channel"}</span>
+                <CheckCircle2 className="h-3 w-3 text-green-500" />
+              </div>
+            );
+          })}
         </div>
       )}
       {/* Platform buttons to connect */}
