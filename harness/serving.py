@@ -393,9 +393,10 @@ async def chat(req: ChatRequest):
                 count_match = _re.search(r'(\d+)\s*(latest|recent|top|post|thread)', last_msg)
                 requested_count = int(count_match.group(1)) if count_match else 5
 
+                specific_sub = ""
                 if sub_match:
                     # User asked for a specific subreddit
-                    specific_sub = sub_match.group(1) or sub_match.group(2) or sub_match.group(3)
+                    specific_sub = sub_match.group(1) or sub_match.group(2) or sub_match.group(3) or ""
                     print(f"[RALLY] Scraping specific sub: r/{specific_sub}, count={requested_count}")
                     raw_posts = scrape_reddit(specific_sub, limit=requested_count, sort="new")
                     print(f"[RALLY] Got {len(raw_posts)} posts from Reddit")
@@ -419,6 +420,7 @@ async def chat(req: ChatRequest):
                     return {"response": f"**No relevant threads found** in r/{sub_name} right now.\n\nThis could mean:\n- The subreddit has very few recent posts\n- Reddit is blocking requests from our server\n- The subreddit name might be different (check spelling)\n\n**Try:**\n- A different subreddit: `r/personalfinanceindia`, `r/IndiaInvestments`, `r/india`\n- A broader search: \"Find threads about emergency loans on Reddit\""}
 
                 if threads:
+                    discovered_count = len(threads)
                     # Build thread list for the LLM (ONE call for all replies)
                     thread_list = ""
                     for i, t in enumerate(threads):
@@ -455,7 +457,7 @@ etc."""
                     reply_blocks = [r.strip() for r in reply_blocks if r.strip()]
 
                     # Build final response with Python-controlled structure
-                    parts = [f"I scanned Reddit and found **{data['discovered']} real threads**. Here are the top {len(threads)} with my responses:\n"]
+                    parts = [f"I scanned Reddit and found **{discovered_count} real threads**. Here are the top {len(threads)} with my responses:\n"]
 
                     for i, t in enumerate(threads):
                         parts.append(f"### Thread {i+1} — r/{t.get('subreddit', '')}")
