@@ -697,17 +697,30 @@ Give 3-4 actionable content recommendations for Apollo Cash marketing. What shou
 
                 # Preview the content before posting
                 preview = post_content[:150] + ("..." if len(post_content) > 150 else "")
+                from datetime import datetime as dt_now
+                post_payload = {
+                    "type": "now",
+                    "shortLink": False,
+                    "date": dt_now.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "tags": [],
+                    "posts": [{
+                        "integration": {"id": c["id"]},
+                        "value": [{"content": post_content[:500], "image": []}],
+                        "settings": {"who_can_reply_post": "everyone"}
+                    } for c in channels]
+                }
                 post_resp = http_requests.post(
                     f"{POSTIZ_URL}/posts",
                     headers={"Authorization": POSTIZ_KEY, "Content-Type": "application/json"},
-                    json={"content": post_content[:500], "platforms": [c["id"] for c in channels]},
+                    json=post_payload,
                     timeout=10
                 )
                 if post_resp.ok:
                     result = post_resp.json()
-                    response = f"**Posted to {channel_names}!** ✓\n\n> {preview}\n\nPost ID: `{result.get('id', 'N/A')}`"
+                    post_id = result[0].get("postId", "N/A") if isinstance(result, list) else "N/A"
+                    response = f"**Posted to {channel_names}!** ✓\n\n> {preview}\n\nPost ID: `{post_id}`"
                 else:
-                    response = f"**Post queued** for {channel_names}\n\n> {preview}"
+                    response = f"**Failed to post:** {post_resp.text[:200]}"
 
                 return {"response": response}
             except Exception as e:
