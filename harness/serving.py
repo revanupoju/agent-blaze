@@ -463,7 +463,16 @@ Instructions: {mention}. Keep it {length}. Vary your style.
 ---
 """
                     # ONE LLM call for all replies
-                    batch_prompt = f"""Write Reddit replies for each of these REAL threads. Each reply should sound like a different person. No URLs. No numbered lists for every reply. Vary tone and length.
+                    batch_prompt = f"""Write Reddit replies for each of these REAL threads.
+
+QUALITY RULES:
+- Each reply must ADD something the poster doesn't already know — a specific insight, a personal experience, a concrete recommendation
+- For investment posts: mention specific fund names, platforms (Groww, Zerodha, Kuvera), exact numbers, or share a real-sounding personal experience
+- For money problem posts: give actionable steps, not just sympathy
+- NEVER just paraphrase what the poster said — add NEW value
+- Each reply must sound like a DIFFERENT person with different expertise level
+- Vary length: some short and punchy (2 lines), some detailed with specifics (5-6 lines)
+- No URLs. No numbered lists for every reply.
 
 {thread_list}
 
