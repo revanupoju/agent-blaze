@@ -90,8 +90,8 @@ export function DashboardHome() {
         ))}
       </div>
 
-      {/* Publish + Stats row */}
-      <div className="grid grid-cols-5 gap-3 mb-6">
+      {/* Stats row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {[
           { label: "Vortex", value: socialCount },
           { label: "Draft", value: articleCount },
@@ -110,16 +110,6 @@ export function DashboardHome() {
           <Send className="h-4 w-4 text-muted-foreground/50 group-hover:text-accent mb-1 transition-colors" />
           <p className="text-[13px] font-medium text-foreground">Publish</p>
           <p className="text-[10px] text-muted-foreground">Schedule posts</p>
-        </button>
-        <button
-          type="button"
-          onClick={handleRunPipeline}
-          disabled={pipelineRunning}
-          className="rounded-xl accent-gradient p-4 flex flex-col items-center justify-center gap-1.5 hover:opacity-90 disabled:opacity-50 transition-all shadow-md shadow-accent/15"
-          style={{ color: "#FFF" }}
-        >
-          {pipelineRunning ? <Loader2 className="h-5 w-5 animate-spin" /> : <Zap className="h-5 w-5" />}
-          <span className="text-[11px] font-medium">{pipelineStatus || "Run All"}</span>
         </button>
       </div>
     </div>
