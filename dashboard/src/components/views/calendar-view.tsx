@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   Send, Plus, ExternalLink, Loader2, CheckCircle2, AlertCircle,
   ChevronLeft, ChevronRight, Clock, Trash2, MessageCircle, X,
-  Video, AtSign, Share2, Globe, Mail,
+  Video, AtSign, Share2, Globe, Mail, Image as ImageIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -78,6 +78,7 @@ function ComposeModal({
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [posting, setPosting] = useState(false);
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
 
   const handlePost = async () => {
     if (!content.trim()) return;
