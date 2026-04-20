@@ -61,13 +61,21 @@ function PulseIcon({ className }: { className?: string }) {
   );
 }
 
+function DispatchIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 311 312" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M134.185 134.85C122.636 134.85 142.328 -7.28666 93.0882 8.76262C46.2723 24.0218 111.734 134.85 100.734 134.85C89.734 134.85 12.8518 128.468 7.7334 163.219C2.01706 202.03 102.733 180.306 105.733 185.284C108.734 190.263 66.189 249.208 93.0882 267.241C120.956 285.923 156.539 216.806 162.637 216.806C168.734 216.806 200.248 330.035 225.862 298.763C246.679 273.348 197.056 216.806 206.895 216.806C216.733 216.806 290.135 222.55 301.733 185.284C315.908 139.741 189.234 172.263 181.604 163.219C173.975 154.176 242.663 81.5824 206.895 62.3496C171.578 43.3596 145.734 134.85 134.185 134.85Z" stroke="currentColor" strokeWidth="15" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
 const agentNav = [
   { label: "Vortex", id: "social", icon: VortexIcon },
   { label: "Draft", id: "seo", icon: DraftIcon },
   { label: "Rally", id: "community", icon: RallyIcon },
   { label: "Freq", id: "research", icon: FreqIcon },
   { label: "Pulse", id: "email", icon: PulseIcon },
-  { label: "Dispatch", id: "dispatch", icon: Send },
+  { label: "Dispatch", id: "dispatch", icon: DispatchIcon },
 ] as const;
 
 const workspaceNav = [
@@ -161,7 +169,7 @@ function SidebarInner({ collapsed, onNavigate }: { collapsed: boolean; onNavigat
             <NavItem icon={PulseIcon} label="Pulse" isActive={current === "email"} collapsed={collapsed} onClick={() => navigate("email")} />
           </div>
           <div data-coach="dispatch">
-            <NavItem icon={Send} label="Dispatch" isActive={current === "dispatch"} collapsed={collapsed} onClick={() => navigate("dispatch")} />
+            <NavItem icon={DispatchIcon} label="Dispatch" isActive={current === "dispatch"} collapsed={collapsed} onClick={() => navigate("dispatch")} />
           </div>
         </div>
 

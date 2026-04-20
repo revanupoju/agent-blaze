@@ -49,7 +49,7 @@ const agentConfig: Record<string, { name: string; description: string; color: st
     name: "Dispatch",
     description: "Post content to Instagram, Twitter, Facebook, Reddit — schedule or publish instantly",
     color: "#10B981",
-    icon: "/blaze-logo.png",
+    icon: "/dispatch.svg",
     apiEndpoint: "/api/chat",
     suggestions: [
       "Post this to Instagram: Salary delays hit different when rent is due tomorrow",

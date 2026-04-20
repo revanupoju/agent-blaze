@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ArrowUp, Check, ChevronDown, Copy, Loader2, Sparkles } from "lucide-react";
+import { ArrowUp, Check, ChevronDown, Copy, Image as ImageIcon, Loader2, Paperclip, Sparkles, Video } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
@@ -344,6 +344,7 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
   const [lang, setLang] = useState<"english" | "hinglish">("english");
   const [model, setModel] = useState("cerebras:qwen-3-235b-a22b-instruct-2507");
   const [latestStreamId, setLatestStreamId] = useState<string | null>(null);
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -503,12 +504,45 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
       {/* Input */}
       <div className="px-6 py-4">
         <div className="mx-auto max-w-3xl">
+          {/* Media preview for Dispatch */}
+          {agent === "dispatch" && mediaFiles.length > 0 && (
+            <div className="flex gap-2 mb-2 flex-wrap mx-auto max-w-3xl">
+              {mediaFiles.map((file, i) => (
+                <div key={i} className="relative w-14 h-14 rounded-lg overflow-hidden border border-border glass">
+                  {file.type.startsWith("image/") ? (
+                    <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                      <Video className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setMediaFiles(prev => prev.filter((_, j) => j !== i))}
+                    className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center text-[8px]"
+                  >×</button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex items-end gap-2 rounded-2xl p-3 glass-input transition-colors duration-150">
+            {/* Media upload button for Dispatch */}
+            {agent === "dispatch" && (
+              <label className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground hover:text-foreground cursor-pointer transition-colors">
+                <Paperclip className="h-4 w-4" />
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => { if (e.target.files) setMediaFiles(prev => [...prev, ...Array.from(e.target.files!)]); }}
+                />
+              </label>
+            )}
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={`Message ${config.name}...`}
+              placeholder={agent === "dispatch" ? "Write your post or paste content to publish..." : `Message ${config.name}...`}
               rows={1}
               disabled={loading}
               className="flex-1 resize-none bg-transparent px-2 py-1.5 text-[14px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none disabled:opacity-50"

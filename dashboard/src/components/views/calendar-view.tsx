@@ -113,7 +113,55 @@ function ComposeModal({
                 rows={5}
                 className="w-full bg-background border border-border rounded-xl px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-accent/40 resize-none"
               />
-              <p className="text-[11px] text-muted-foreground mt-1 text-right">{content.length} characters</p>
+              <div className="flex items-center justify-between mt-2">
+                {/* Media upload */}
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-[12px] text-muted-foreground hover:text-foreground hover:border-accent/30 cursor-pointer transition-all">
+                    <ImageIcon className="h-3.5 w-3.5" />
+                    {mediaFiles.length > 0 ? `${mediaFiles.length} file(s)` : "Add Media"}
+                    <input
+                      type="file"
+                      accept="image/*,video/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files) setMediaFiles(Array.from(e.target.files));
+                      }}
+                    />
+                  </label>
+                  {mediaFiles.length > 0 && (
+                    <button
+                      onClick={() => setMediaFiles([])}
+                      className="text-[11px] text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground">{content.length} characters</p>
+              </div>
+              {/* Media preview */}
+              {mediaFiles.length > 0 && (
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  {mediaFiles.map((file, i) => (
+                    <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
+                      {file.type.startsWith("image/") ? (
+                        <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-muted flex items-center justify-center">
+                          <Video className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      )}
+                      <button
+                        onClick={() => setMediaFiles(prev => prev.filter((_, j) => j !== i))}
+                        className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/50 text-white flex items-center justify-center text-[8px]"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Select Channels */}
