@@ -201,15 +201,6 @@ function SourcesPill({ sources }: { sources: Source[] }) {
 
   if (sources.length === 0) return null;
 
-  const domainIcons: Record<string, string> = {
-    reddit: "🔴",
-    "google trends": "📈",
-    web: "🌐",
-  };
-
-  // Show first 3 domain icons
-  const uniqueDomains = [...new Set(sources.map(s => s.domain))].slice(0, 3);
-
   return (
     <>
       <button
@@ -217,7 +208,7 @@ function SourcesPill({ sources }: { sources: Source[] }) {
         onClick={() => setOpen(!open)}
         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-pill text-[12px] font-medium text-foreground/70 hover:text-foreground transition-colors mt-3"
       >
-        {uniqueDomains.map(d => <span key={d}>{domainIcons[d] || "🌐"}</span>)}
+        <span className="w-1.5 h-1.5 rounded-full bg-accent" />
         <span>{sources.length} sources</span>
       </button>
 
@@ -239,7 +230,7 @@ function SourcesPill({ sources }: { sources: Source[] }) {
                   className="block rounded-xl border border-border p-4 hover:bg-muted transition-colors group"
                 >
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-[11px]">{domainIcons[s.domain] || "🌐"}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
                     <span className="text-[11px] text-muted-foreground">{s.domain}</span>
                   </div>
                   <p className="text-[13px] font-medium text-foreground group-hover:text-accent transition-colors leading-snug">

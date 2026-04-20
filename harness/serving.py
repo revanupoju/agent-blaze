@@ -611,6 +611,20 @@ Give 3-4 actionable content recommendations for Apollo Cash marketing. What shou
             except Exception as e:
                 pass  # Fall through to normal chat
 
+    # Cross-agent redirect — Python-controlled, not LLM-dependent
+    redirects = {
+        "social": {"keywords": ["carousel", "reel", "meme", "instagram post", "youtube short", "whatsapp forward", "social media"], "agent": "Vortex", "job": "social media content"},
+        "seo": {"keywords": ["blog", "article", "seo", "landing page"], "agent": "Draft", "job": "SEO articles"},
+        "community": {"keywords": ["reddit response", "quora answer", "community reply", "thread response"], "agent": "Rally", "job": "community responses"},
+        "email": {"keywords": ["email", "newsletter", "drip sequence", "welcome email"], "agent": "Pulse", "job": "email campaigns"},
+        "dispatch": {"keywords": ["post to", "publish to", "schedule post", "send to instagram"], "agent": "Dispatch", "job": "publishing to channels"},
+    }
+    agent_names = {"social": "Vortex", "seo": "Draft", "community": "Rally", "research": "Freq", "email": "Pulse", "dispatch": "Dispatch"}
+    my_name = agent_names.get(req.agent, req.agent)
+    for agent_id, cfg in redirects.items():
+        if req.agent != agent_id and any(kw in last_msg.lower() for kw in cfg["keywords"]):
+            return {"response": f"That's **{cfg['agent']}'s** specialty — {cfg['job']}. Switch to **{cfg['agent']}** in the sidebar for the best results.\n\nI'm **{my_name}** — I handle research, trends, and content strategy."}
+
     # Normal chat flow (greetings, generation requests, etc.)
     if is_generation:
         instruction = "Generate the content NOW. Do not ask questions. Be thorough, specific, and emotional."
