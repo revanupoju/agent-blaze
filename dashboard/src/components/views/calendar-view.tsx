@@ -9,7 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const POSTIZ_URL = "http://72.60.200.15:4007";
+const POSTIZ_URL = "https://srv1317892.hstgr.cloud";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -250,7 +250,7 @@ function AddChannelModal({ onClose, onChannelAdded }: { onClose: () => void; onC
   const handleConnect = (platform: string) => {
     setConnecting(platform);
     // Open Postiz integrations in a popup window
-    const popup = window.open(POSTIZ_URL, "_blank");
+    const popup = window.open(POSTIZ_URL, "postiz_connect", "width=900,height=750,scrollbars=yes");
 
     // Poll for popup close — when user finishes OAuth and closes popup
     const timer = setInterval(() => {

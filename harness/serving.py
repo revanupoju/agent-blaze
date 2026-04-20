@@ -190,7 +190,7 @@ HOW YOU WORK:
 - After posting, show the status: "Posted successfully" or "Scheduled for April 21 at 3:00 PM"
 
 IMPORTANT:
-- You have access to the Postiz publishing API at http://72.60.200.15:4007
+- You have access to the Postiz publishing API at https://srv1317892.hstgr.cloud
 - Connected channels can be checked via the API
 - Always confirm before publishing — don't post without user approval""",
 
@@ -851,7 +851,7 @@ async def publish_log():
 
 # ── Postiz Integration ───────────────────────────────────────────
 
-POSTIZ_URL = "http://72.60.200.15:4007/api/public/v1"
+POSTIZ_URL = "https://srv1317892.hstgr.cloud/api/public/v1"
 POSTIZ_KEY = "6a0740fd2d9dbb45a5a4c3673a42e34c0d768766db6287140bda0132d0d1724c"
 
 @app.get("/api/postiz/status")
