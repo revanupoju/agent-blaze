@@ -21,12 +21,15 @@ HEADERS = {
     "Cache-Control": "max-age=0",
 }
 
-# Multiple Reddit endpoints to try (fallback chain)
+# Multiple Reddit endpoints to try (fallback chain including proxy)
 REDDIT_URLS = [
     "https://old.reddit.com/r/{sub}/{sort}.json?limit={limit}",
     "https://www.reddit.com/r/{sub}/{sort}.json?limit={limit}&raw_json=1",
     "https://api.reddit.com/r/{sub}/{sort}?limit={limit}",
 ]
+
+# Pullpush.io is a free Reddit archive API — works when Reddit blocks direct access
+PULLPUSH_URL = "https://api.pullpush.io/reddit/search/submission/?subreddit={sub}&size={limit}&sort=desc&sort_type=created_utc"
 
 
 # ── Reddit (free JSON API with fallback) ────────────────────────
@@ -61,6 +64,30 @@ def scrape_reddit(subreddit: str, limit: int = 10, sort: str = "hot") -> list[di
         except Exception as e:
             last_error = str(e)
             continue
+    # Fallback: try Pullpush.io (free Reddit archive API)
+    try:
+        pp_url = PULLPUSH_URL.format(sub=subreddit, limit=limit)
+        resp = requests.get(pp_url, headers={"User-Agent": "AgentBlaze/1.0"}, timeout=15)
+        if resp.ok:
+            items = resp.json().get("data", [])
+            posts = []
+            for item in items[:limit]:
+                posts.append({
+                    "title": item.get("title", ""),
+                    "body": (item.get("selftext", "") or "")[:500],
+                    "author": item.get("author", ""),
+                    "score": item.get("score", 0),
+                    "num_comments": item.get("num_comments", 0),
+                    "url": f"https://reddit.com/r/{subreddit}/comments/{item.get('id', '')}",
+                    "created": datetime.fromtimestamp(item.get("created_utc", 0)).strftime("%Y-%m-%d %H:%M"),
+                    "subreddit": subreddit,
+                    "source": "pullpush",
+                })
+            if posts:
+                return posts
+    except Exception:
+        pass
+
     return [{"error": f"All Reddit endpoints blocked. Last error: {last_error}", "subreddit": subreddit}]
 
 
