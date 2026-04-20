@@ -617,7 +617,11 @@ Give 3-4 actionable content recommendations for Apollo Cash marketing. What shou
         import requests as http_requests
 
         # Handle channel connection requests
+        all_platform_keywords = ["x", "twitter", "tweet", "linkedin", "facebook", "fb", "instagram", "insta", "ig", "reddit", "youtube", "yt", "threads", "tiktok", "pinterest"]
         is_connect = any(kw in last_msg.lower() for kw in ["connect", "add channel", "link", "set up", "setup"])
+        # Also treat bare platform names as connect requests
+        if not is_connect and last_msg.strip().lower() in all_platform_keywords:
+            is_connect = True
         if is_connect:
             # Detect which platform
             platforms = {
