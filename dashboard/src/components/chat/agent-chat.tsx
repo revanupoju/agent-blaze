@@ -197,52 +197,46 @@ function extractSources(content: string): { cleanContent: string; sources: Sourc
 }
 
 function SourcesPill({ sources }: { sources: Source[] }) {
-  const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   if (sources.length === 0) return null;
 
   return (
-    <>
+    <div className="mt-4">
+      {/* Collapsed: horizontal scrollable strip */}
       <button
         type="button"
-        onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-pill text-[12px] font-medium text-foreground/70 hover:text-foreground transition-colors mt-3"
+        onClick={() => setExpanded(!expanded)}
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-pill text-[12px] font-medium text-foreground/60 hover:text-foreground transition-colors"
       >
         <span className="w-1.5 h-1.5 rounded-full bg-accent" />
         <span>{sources.length} sources</span>
+        <ChevronDown className={cn("h-3 w-3 transition-transform", expanded && "rotate-180")} />
       </button>
 
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40 bg-black/10 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="fixed right-0 top-0 z-50 h-full w-[380px] bg-background border-l border-border shadow-2xl overflow-y-auto animate-fade-up">
-            <div className="p-5 border-b border-border flex items-center justify-between sticky top-0 bg-background/90 backdrop-blur-sm">
-              <h3 className="text-[15px] font-semibold text-foreground">Sources for this research</h3>
-              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground text-[18px]">×</button>
-            </div>
-            <div className="p-4 space-y-3">
-              {sources.map((s) => (
-                <a
-                  key={s.num}
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block rounded-xl border border-border p-4 hover:bg-muted transition-colors group"
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
-                    <span className="text-[11px] text-muted-foreground">{s.domain}</span>
-                  </div>
-                  <p className="text-[13px] font-medium text-foreground group-hover:text-accent transition-colors leading-snug">
-                    {s.title}
-                  </p>
-                </a>
-              ))}
-            </div>
-          </div>
-        </>
+      {/* Expanded: source cards grid inline */}
+      {expanded && (
+        <div className="mt-3 grid grid-cols-2 gap-2 animate-fade-up">
+          {sources.map((s) => (
+            <a
+              key={s.num}
+              href={s.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-xl border border-border bg-background p-3 hover:bg-muted transition-colors group"
+            >
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="w-1 h-1 rounded-full bg-accent shrink-0" />
+                <span className="text-[10px] text-muted-foreground truncate">{s.domain}</span>
+              </div>
+              <p className="text-[12px] font-medium text-foreground group-hover:text-accent transition-colors leading-snug line-clamp-2">
+                {s.title}
+              </p>
+            </a>
+          ))}
+        </div>
       )}
-    </>
+    </div>
   );
 }
 

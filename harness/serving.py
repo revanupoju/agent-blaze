@@ -238,9 +238,17 @@ OUTPUT_RULES = """
 
 FORMAT: Use clean Markdown. **Bold** for emphasis. ## headers. - bullets.
 No horizontal rules. No decorative characters. No raw JSON.
-NEVER use emojis — no ✅, no 🟢, no 📈, no 💸, no checkmarks. Zero emojis anywhere.
+NEVER use emojis — no checkmarks, no colored circles, no chart icons. Zero emojis anywhere.
 Let whitespace do the work.
-NEVER fabricate source links, Reddit scores, or YouTube view counts. If you cite a source, it must be real. If you can't verify it, don't include a Sources section."""
+
+SOURCE RULES (CRITICAL):
+- NEVER fabricate source links, Reddit post scores, YouTube view counts, or Google Trends percentages
+- NEVER invent Reddit posts or usernames and cite them as sources
+- NEVER make up growth percentages like "120% increase" unless you have real data
+- If you are using your own knowledge (not scraped data), do NOT include a Sources section at all
+- ONLY include a Sources section when REAL scraped data was provided to you by the system
+- Google Trends links are OK if the keyword is real: https://trends.google.com/trends/explore?q=KEYWORD&geo=IN
+- But do NOT fabricate the trend percentage — just link to the page and let the user check"""
 
 
 # ── Promotional Language Filter ─────────────────────────────────
