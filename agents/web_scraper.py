@@ -200,15 +200,43 @@ def scrape_page(url: str) -> dict:
 
 # ── Combined research function (what Freq uses) ────────────────
 
+def _pullpush_search(query: str, subreddit: str = "", limit: int = 5) -> list[dict]:
+    """Search Reddit via Pullpush.io (works when Reddit blocks direct access)."""
+    try:
+        params = f"q={requests.utils.quote(query)}&size={limit}&sort=desc&sort_type=created_utc"
+        if subreddit:
+            params += f"&subreddit={subreddit}"
+        url = f"https://api.pullpush.io/reddit/search/submission/?{params}"
+        resp = requests.get(url, headers={"User-Agent": "AgentBlaze/1.0"}, timeout=15)
+        if resp.ok:
+            items = resp.json().get("data", [])
+            return [{
+                "title": item.get("title", ""),
+                "body": (item.get("selftext", "") or "")[:500],
+                "author": item.get("author", ""),
+                "score": item.get("score", 0),
+                "num_comments": item.get("num_comments", 0),
+                "subreddit": item.get("subreddit", subreddit),
+                "url": f"https://reddit.com/r/{item.get('subreddit','')}/comments/{item.get('id','')}",
+                "source": "pullpush",
+            } for item in items]
+    except Exception:
+        pass
+    return []
+
+
 def research_live(topic: str = "personal loan India") -> dict:
-    """Run a full live research sweep — Reddit + Google Trends."""
+    """Run a full live research sweep — Reddit (via Pullpush) + Google Trends."""
     results = {}
 
-    # Reddit: search across finance subreddits
+    # Reddit: search across finance subreddits using Pullpush (bypasses Reddit blocks)
     subreddits = ["personalfinanceindia", "IndiaInvestments", "india"]
     all_reddit_posts = []
     for sub in subreddits:
-        posts = search_reddit(topic, subreddit=sub, limit=5)
+        # Try Pullpush first (reliable), then regular search as fallback
+        posts = _pullpush_search(topic, subreddit=sub, limit=5)
+        if not posts:
+            posts = search_reddit(topic, subreddit=sub, limit=5)
         all_reddit_posts.extend([p for p in posts if "error" not in p])
 
     results["reddit"] = {
@@ -250,7 +278,9 @@ def discover_threads(keywords: list[str] | None = None) -> dict:
 
     all_threads = []
     for kw in keywords[:4]:
-        posts = search_reddit(kw, limit=5)
+        posts = _pullpush_search(kw, limit=5)
+        if not posts:
+            posts = search_reddit(kw, limit=5)
         for p in posts:
             if "error" not in p and p.get("title"):
                 p["search_keyword"] = kw
