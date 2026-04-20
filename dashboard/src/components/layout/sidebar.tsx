@@ -55,9 +55,8 @@ function DraftIcon({ className }: { className?: string }) {
 
 function PulseIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="4" width="20" height="16" rx="2" />
-      <path d="M22 7l-10 6L2 7" />
+    <svg className={className} viewBox="0 0 509 221" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7.50004 112.135C7.50004 112.135 54.1663 64.0519 94.5534 54.2548C148.209 41.2388 186.757 116.441 183.294 153.667C179.831 190.893 143.471 194.356 120.096 190.893C96.7212 187.43 78.9738 158.733 87.1982 126.397C95.4226 94.0604 150.47 33.2786 227.236 39.4358C304.002 45.593 341.061 87.436 311.135 130.429C300.175 146.175 285.901 154.17 270.992 158.733C256.083 163.296 225.233 155.062 227.745 123.741C230.258 92.419 294.52 39.933 349.46 49.2391C398.665 57.5738 444.858 95.0781 441.766 133.63C438.674 172.182 402.247 169.26 394.42 168.632C386.593 168.005 365.461 163.277 363.516 134.631C361.572 105.984 383.619 16.2109 501.348 40.5072" stroke="currentColor" strokeWidth="15" strokeLinecap="round"/>
     </svg>
   );
 }

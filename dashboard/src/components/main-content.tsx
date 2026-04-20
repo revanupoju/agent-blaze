@@ -49,7 +49,7 @@ const agentConfig: Record<string, { name: string; description: string; color: st
     name: "Pulse",
     description: "Write email campaigns, newsletters, and drip sequences for Apollo Cash users",
     color: "#E44D8A",
-    icon: "/blaze-logo.png",
+    icon: "/pulse.svg",
     apiEndpoint: "/api/chat",
     suggestions: [
       "Write a welcome email for new Apollo Cash users",
