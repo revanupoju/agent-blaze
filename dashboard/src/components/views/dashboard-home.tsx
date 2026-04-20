@@ -82,7 +82,8 @@ export function DashboardHome() {
           { id: "seo", label: "Chat with Draft — SEO Articles & Blogs", svg: "/draft.svg", anim: "agent-icon-draft" },
           { id: "community", label: "Chat with Rally — Community Responses", svg: "/rally.svg", anim: "agent-icon-rally" },
           { id: "research", label: "Chat with Freq — Trends & Research", svg: "/freq.svg", anim: "agent-icon-freq" },
-          { id: "email", label: "Chat with Pulse — Email & Newsletters", svg: null, anim: "" },
+          { id: "email", label: "Chat with Pulse — Email & Newsletters", svg: "/pulse.svg", anim: "agent-icon-freq" },
+          { id: "dispatch", label: "Chat with Dispatch — Post to social channels", svg: null, anim: "" },
           { id: "calendar", label: "Publish — Schedule & post to all channels", svg: null, anim: "" },
         ].map((item) => (
           <button

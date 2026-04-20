@@ -45,6 +45,19 @@ const agentConfig: Record<string, { name: string; description: string; color: st
       "Generate Facebook group responses for gig worker money problems",
     ],
   },
+  dispatch: {
+    name: "Dispatch",
+    description: "Post content to Instagram, Twitter, Facebook, Reddit — schedule or publish instantly",
+    color: "#10B981",
+    icon: "/blaze-logo.png",
+    apiEndpoint: "/api/chat",
+    suggestions: [
+      "Post this to Instagram: Salary delays hit different when rent is due tomorrow",
+      "Schedule a tweet for tomorrow 9 AM about emergency loans",
+      "What channels are connected right now?",
+      "Take the last Vortex post and publish it to all channels",
+    ],
+  },
   email: {
     name: "Pulse",
     description: "Write email campaigns, newsletters, and drip sequences for Apollo Cash users",

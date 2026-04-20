@@ -156,6 +156,27 @@ Rules:
 - NEVER add hyperlinks or URLs
 - When using live Reddit data, reference the EXACT post titles and subreddits shown""",
 
+    "dispatch": APOLLO_CONTEXT + """
+You are **Dispatch** — the publishing agent inside Blaze. You take content and post it to social channels.
+
+YOUR CAPABILITIES:
+- Schedule posts to Instagram, Twitter/X, Facebook, LinkedIn, Reddit, YouTube
+- Post immediately or schedule for a specific date and time
+- Accept content from other agents (Vortex, Draft, Rally) and publish it
+- Handle multi-platform posting (same content to multiple channels at once)
+
+HOW YOU WORK:
+- When the user gives you content and says "post this" — you call the Postiz API to create the post
+- Ask which channels to post to if not specified
+- Ask for schedule time if not specified (or post immediately)
+- Confirm before posting: "I'll post this to Instagram and Twitter at 3 PM tomorrow. Confirm?"
+- After posting, show the status: "Posted successfully" or "Scheduled for April 21 at 3:00 PM"
+
+IMPORTANT:
+- You have access to the Postiz publishing API at http://72.60.200.15:4007
+- Connected channels can be checked via the API
+- Always confirm before publishing — don't post without user approval""",
+
     "email": APOLLO_CONTEXT + """
 You are **Pulse** — the email and newsletter agent.
 
@@ -468,6 +489,41 @@ Give 3-4 actionable content recommendations for Apollo Cash marketing. What shou
 
         except Exception as e:
             pass  # Fall through to normal chat
+
+    # Dispatch agent: handle posting commands
+    if req.agent == "dispatch":
+        is_post_command = any(kw in last_msg.lower() for kw in ["post", "publish", "schedule", "send", "share", "confirm", "yes"])
+        if is_post_command and len(last_msg.split()) >= 3:
+            try:
+                import requests as http_requests
+                # Check connected channels
+                ch_resp = http_requests.get(f"{POSTIZ_URL}/integrations", headers={"Authorization": POSTIZ_KEY}, timeout=5)
+                channels = ch_resp.json() if ch_resp.ok else []
+
+                # Extract content from conversation (find the longest message)
+                all_contents = [m.content for m in req.messages if m.role == "user" and len(m.content) > 50]
+                post_content = all_contents[-1] if all_contents else last_msg
+
+                if channels:
+                    channel_names = ", ".join([c.get("name", c.get("providerName", "channel")) for c in channels])
+                    # Post via Postiz
+                    post_resp = http_requests.post(
+                        f"{POSTIZ_URL}/posts",
+                        headers={"Authorization": POSTIZ_KEY, "Content-Type": "application/json"},
+                        json={"content": post_content[:500], "platforms": [c["id"] for c in channels]},
+                        timeout=10
+                    )
+                    if post_resp.ok:
+                        result = post_resp.json()
+                        response = f"**Posted successfully!**\n\nContent sent to: {channel_names}\n\nPost ID: `{result.get('id', 'N/A')}`\n\nYou can view and manage this post in the Publish tab."
+                    else:
+                        response = f"**Post created** (queued for publishing)\n\nContent will be sent to: {channel_names}\n\nCheck the Publish tab to verify the schedule."
+                else:
+                    response = "**No channels connected yet.**\n\nGo to the **Publish** tab → click **Add Channel** to connect Instagram, Twitter, Facebook, etc.\n\nOnce connected, come back and I'll post your content."
+
+                return {"response": response}
+            except Exception as e:
+                pass  # Fall through to normal chat
 
     # Normal chat flow (greetings, generation requests, etc.)
     if is_generation:

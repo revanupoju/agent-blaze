@@ -67,6 +67,7 @@ const agentNav = [
   { label: "Rally", id: "community", icon: RallyIcon },
   { label: "Freq", id: "research", icon: FreqIcon },
   { label: "Pulse", id: "email", icon: PulseIcon },
+  { label: "Dispatch", id: "dispatch", icon: Send },
 ] as const;
 
 const workspaceNav = [
@@ -158,6 +159,9 @@ function SidebarInner({ collapsed, onNavigate }: { collapsed: boolean; onNavigat
           </div>
           <div data-coach="email">
             <NavItem icon={PulseIcon} label="Pulse" isActive={current === "email"} collapsed={collapsed} onClick={() => navigate("email")} />
+          </div>
+          <div data-coach="dispatch">
+            <NavItem icon={Send} label="Dispatch" isActive={current === "dispatch"} collapsed={collapsed} onClick={() => navigate("dispatch")} />
           </div>
         </div>
 
