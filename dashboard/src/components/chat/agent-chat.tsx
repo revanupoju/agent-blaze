@@ -479,7 +479,7 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
                     <button
                       type="button"
                       onClick={() => {
-                        const popup = window.open("https://srv1317892.hstgr.cloud", "postiz_connect", "width=900,height=750,scrollbars=yes");
+                        const popup = window.open("https://srv1317892.hstgr.cloud/auth/login", "postiz_connect", "width=900,height=750,scrollbars=yes");
                         const timer = setInterval(() => { if (popup?.closed) { clearInterval(timer); setChannelRefresh(r => r + 1); } }, 1000);
                       }}
                       className="flex items-center gap-1 text-[11px] text-accent hover:underline"
