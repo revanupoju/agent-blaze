@@ -462,8 +462,9 @@ etc."""
                     parts = [f"I scanned Reddit and found **{discovered_count} real threads**. Here are the top {len(threads)} with my responses:\n"]
 
                     for i, t in enumerate(threads):
+                        thread_url = t.get("url", f"https://reddit.com/r/{t.get('subreddit','')}")
                         parts.append(f"### Thread {i+1} — r/{t.get('subreddit', '')}")
-                        parts.append(f"**\"{t['title']}\"** — {t.get('score', 0)} upvotes, {t.get('num_comments', 0)} comments")
+                        parts.append(f"[**\"{t['title']}\"**]({thread_url}) — {t.get('score', 0)} upvotes, {t.get('num_comments', 0)} comments")
                         if t.get("author"):
                             parts.append(f"*by u/{t['author']}*")
                         if t.get("body"):
