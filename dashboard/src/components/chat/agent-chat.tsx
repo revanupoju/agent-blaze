@@ -477,7 +477,7 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-[12px] font-medium text-muted-foreground/60 uppercase tracking-wider">Connected Channels</p>
                     <a
-                      href="https://srv1317892.hstgr.cloud/launches"
+                      href="/connect.html"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1 text-[11px] text-accent hover:underline"

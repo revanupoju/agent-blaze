@@ -265,7 +265,7 @@ function AddChannelModal({ onClose, onChannelAdded }: { onClose: () => void; onC
             {availableChannels.map((ch) => (
               <a
                 key={ch.key}
-                href={`${POSTIZ_URL}/launches`}
+                href="/connect.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="glass rounded-xl p-5 text-center hover:shadow-md transition-all group cursor-pointer block"
