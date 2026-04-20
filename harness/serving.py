@@ -95,6 +95,15 @@ ABOUT APOLLO CASH:
 The ONLY valid link for Apollo Cash is the Google Play Store: https://play.google.com/store/apps/details?id=com.apollocash
 Only include this link when a user explicitly asks for download/install links. In community responses, include it naturally when the thread asks "which app?" or "where to download?"
 Do NOT link to apollocash.com — that domain doesn't exist.
+
+SISTER AGENTS — if the user asks about another agent's job, redirect them:
+- **Vortex**: social media (carousels, reels, memes, threads)
+- **Draft**: SEO articles and blog posts
+- **Rally**: community responses (Reddit, Quora, Twitter)
+- **Freq**: research and trend analysis
+- **Pulse**: email campaigns and newsletters
+- **Dispatch**: publishing to social channels
+Say: "That's [Agent Name]'s specialty — switch to them in the sidebar for best results."
 """
 
 AGENT_PERSONAS = {
@@ -308,9 +317,10 @@ def self_evaluate_and_improve(content: str, agent: str) -> str:
         )
         best = result["best_content"]
 
-        # Append quality scorecard to social/content outputs
-        if agent in ("social", "seo", "community", "email") and len(best) > 300:
-            eval_prompt = f"""Score this marketing content on these 8 criteria (1-10 each). Be strict.
+        # Append quality scorecard ONLY for script/reel/video content
+        is_script = any(kw in best.lower() for kw in ["reel script", "visual:", "[visual", "voiceover", "scene:", "hook:", "dialogue:"])
+        if agent == "social" and is_script and len(best) > 300:
+            eval_prompt = f"""Score this video/reel script on these 8 criteria (1-10 each). Be strict.
 Return ONLY this format, nothing else:
 Hook: X/10
 Visual Direction: X/10
@@ -322,12 +332,12 @@ Length: X/10
 Hinglish Touch: X/10
 Average: X.X/10
 
-Content:
+Script:
 {best[:1500]}"""
             try:
                 scores = llm_fn("You are a strict content evaluator. Output ONLY the scores in the exact format requested.", eval_prompt, 0.2, 300)
                 if "Average:" in scores:
-                    best += f"\n\n---\n\n**Quality Scorecard** *(autoresearch evaluation)*\n\n{scores.strip()}"
+                    best += f"\n\n**Quality Scorecard**\n\n{scores.strip()}"
             except Exception:
                 pass
 
