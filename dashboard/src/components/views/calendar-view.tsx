@@ -263,15 +263,17 @@ function AddChannelModal({ onClose, onChannelAdded }: { onClose: () => void; onC
           </p>
           <div className="p-6 grid grid-cols-3 gap-3">
             {availableChannels.map((ch) => (
-              <button
+              <a
                 key={ch.key}
-                onClick={() => window.open(`${POSTIZ_URL}/launches`, "_blank", "noopener,noreferrer")}
-                className="glass rounded-xl p-5 text-center hover:shadow-md transition-all group cursor-pointer block w-full"
+                href={`${POSTIZ_URL}/launches`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glass rounded-xl p-5 text-center hover:shadow-md transition-all group cursor-pointer block"
               >
                 <PlatformLogo name={ch.key} className={cn("h-7 w-7 mx-auto mb-2", platformColors[ch.key] || "text-foreground", "opacity-70 group-hover:opacity-100 transition-opacity")} />
                 <p className="text-[13px] font-medium text-foreground">{ch.name}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Connect</p>
-              </button>
+              </a>
             ))}
           </div>
           <div className="px-6 py-4 border-t border-border flex items-center justify-between">
