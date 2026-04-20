@@ -424,10 +424,12 @@ async def chat(req: ChatRequest):
                     # Build thread list for the LLM (ONE call for all replies)
                     thread_list = ""
                     for i, t in enumerate(threads):
-                        # Only mention Apollo Cash if the thread is about money/loans AND is Indian context
-                        is_money_thread = any(kw in (t.get("title","") + t.get("body","")).lower() for kw in ["loan","money","salary","emi","rent","cash","broke"])
-                        is_india = any(kw in (t.get("title","") + t.get("body","") + t.get("subreddit","")).lower() for kw in ["india","inr","rupee","lakh","crore","mumbai","delhi","bangalore"])
-                        mention = "Mention Apollo Cash as ONE option among others" if is_money_thread and is_india and i < 3 else "Do NOT mention Apollo Cash or any loan app — give pure helpful advice only"
+                        # Only mention Apollo Cash if the thread is about NEEDING money urgently (loans, emergency, broke)
+                        # NOT for investment, savings, or financial education posts
+                        thread_text = (t.get("title","") + " " + t.get("body","")).lower()
+                        is_need_money = any(kw in thread_text for kw in ["need money","loan","emergency","salary delay","broke","urgent","help me","struggling","can't pay","short on","rent due","medical bill","repair cost"])
+                        is_investment = any(kw in thread_text for kw in ["invest","sip","mutual fund","cagr","xirr","portfolio","stock","nifty","sensex","etf","returns"])
+                        mention = "Mention Apollo Cash BRIEFLY as ONE option" if is_need_money and not is_investment and i < 2 else "Do NOT mention Apollo Cash or any loan/finance app. Give pure helpful advice only. Do NOT invent features that Apollo Cash doesn't have."
                         length = "short (2-3 sentences)" if i % 2 == 0 else "detailed (4-6 sentences)"
                         thread_list += f"""
 THREAD {i+1}: r/{t.get('subreddit','')} — "{t['title']}"
@@ -468,9 +470,9 @@ etc."""
                             parts.append(f"\n> {t['body'][:200]}{'...' if len(t.get('body','')) > 200 else ''}\n")
 
                         reply = reply_blocks[i] if i < len(reply_blocks) else "Great question — would need more context to give specific advice."
-                        mention_apollo = i < 3
+                        actually_mentions = is_need_money and not is_investment and i < 2
                         parts.append(f"**My response:**\n{reply}")
-                        parts.append(f"\n*Strategy: {'Mentions Apollo Cash as one option' if mention_apollo else 'Pure advice — trust building'}*\n")
+                        parts.append(f"\n*Strategy: {'Mentions Apollo Cash contextually' if actually_mentions else 'Pure advice — no brand mention'}*\n")
 
                     response = "\n".join(parts)
                     return {"response": response}
