@@ -368,15 +368,36 @@ async def chat(req: ChatRequest):
     # LLM call with retry + backoff (handles Cerebras 429 rate limits)
     def llm_call(system_prompt: str, user_prompt: str, temp: float = 0.8, max_tok: int = 4000) -> str:
         from agents.llm_client import _call_cerebras
-        import time
+        import time, os
         last_error = ""
+        model = os.getenv("CEREBRAS_MODEL", "llama3.1-8b")
         for attempt in range(3):
             try:
-                return _call_cerebras(system_prompt, user_prompt, temp, max_tok)
+                result = _call_cerebras(system_prompt, user_prompt, temp, max_tok)
+                if result and len(result.strip()) > 10:
+                    return result
+                # Empty response — try switching to smaller model
+                if model != "llama3.1-8b":
+                    os.environ["CEREBRAS_MODEL"] = "llama3.1-8b"
+                    result = _call_cerebras(system_prompt, user_prompt, temp, max_tok)
+                    os.environ["CEREBRAS_MODEL"] = model  # Restore
+                    if result and len(result.strip()) > 10:
+                        return result
+                last_error = "Empty response from LLM"
             except Exception as e:
                 last_error = str(e)
                 if "429" in last_error or "rate" in last_error.lower():
-                    time.sleep(1.5 * (attempt + 1))  # 1.5s, 3s, 4.5s backoff
+                    time.sleep(1.5 * (attempt + 1))
+                    # Fall back to smaller model on rate limit
+                    if model != "llama3.1-8b":
+                        try:
+                            os.environ["CEREBRAS_MODEL"] = "llama3.1-8b"
+                            result = _call_cerebras(system_prompt, user_prompt, temp, max_tok)
+                            os.environ["CEREBRAS_MODEL"] = model
+                            if result and len(result.strip()) > 10:
+                                return result
+                        except Exception:
+                            pass
                 else:
                     break
         return f"LLM temporarily unavailable ({last_error[:80]}). Please try again in a moment."
