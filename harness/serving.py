@@ -92,7 +92,9 @@ ABOUT APOLLO CASH:
 - Most users repay in 10-15 days (salary advance use case)
 - Target: gig workers, salaried (₹15K-40K/month), self-employed, NTC youth (21-35)
 
-NEVER fabricate URLs. Do NOT link to apollocash.com. Just mention "Apollo Cash" by name.
+The ONLY valid link for Apollo Cash is the Google Play Store: https://play.google.com/store/apps/details?id=com.apollocash
+Only include this link when a user explicitly asks for download/install links. In community responses, include it naturally when the thread asks "which app?" or "where to download?"
+Do NOT link to apollocash.com — that domain doesn't exist.
 """
 
 AGENT_PERSONAS = {
@@ -153,6 +155,21 @@ Rules:
 - NEVER use numbered lists for every response — mix styles
 - NEVER add hyperlinks or URLs
 - When using live Reddit data, reference the EXACT post titles and subreddits shown""",
+
+    "email": APOLLO_CONTEXT + """
+You are **Pulse** — the email and newsletter agent.
+
+Write email campaigns, newsletters, and drip sequences for Apollo Cash users and prospects.
+
+Rules:
+- Subject lines must be under 50 characters, curiosity-driven, no clickbait
+- Emails should feel personal — like a friend checking in, not a company blasting
+- Include a clear but soft CTA — "worth a look" not "SIGN UP NOW"
+- Segment emails by audience: gig workers, salaried, self-employed, NTC youth
+- For newsletters: mix helpful tips (80%) with product updates (20%)
+- For drip sequences: map to user journey (awareness → consideration → activation → retention)
+- Always include an unsubscribe line
+- Keep emails under 200 words — nobody reads long marketing emails""",
 
     "research": APOLLO_CONTEXT + """
 You are **Freq** — the research agent.
@@ -597,6 +614,46 @@ async def get_memory():
 @app.get("/api/runs")
 async def get_runs():
     return {"runs": [orchestrator.get_run_summary(r) for r in orchestrator.runs], "count": len(orchestrator.runs)}
+
+# ── Auto-Publishing Endpoints ───────────────────────────────────
+
+class PublishRequest(BaseModel):
+    platform: str = "instagram"
+    content: dict = {}
+
+@app.post("/api/publish")
+async def publish_content(req: PublishRequest):
+    """Publish content to a platform (real or simulated)."""
+    from agents.auto_publisher import publish_instagram, publish_facebook, publish_twitter, _simulate, PLATFORM_HANDLERS
+    handler = PLATFORM_HANDLERS.get(req.platform, _simulate)
+    result = handler(req.content)
+    return {"status": result.status, "platform": result.platform, "post_id": result.post_id, "url": result.url}
+
+@app.post("/api/publish/batch")
+async def publish_batch_content():
+    """Publish all pending calendar posts."""
+    from agents.auto_publisher import publish_batch, get_publish_log
+    # Get latest social posts
+    output_dir = Path("output/social_media")
+    posts = []
+    if output_dir.exists():
+        for f in sorted(output_dir.glob("*.json"), reverse=True)[:1]:
+            with open(f) as fh:
+                data = json.load(fh)
+                if isinstance(data, list):
+                    posts = data
+    if posts:
+        results = publish_batch(posts)
+        return {"status": "success", "published": len(results), "results": [{"platform": r.platform, "status": r.status, "post_id": r.post_id} for r in results]}
+    return {"status": "no_content", "message": "No posts to publish. Generate content first."}
+
+@app.get("/api/publish/log")
+async def publish_log():
+    """Get the publishing history."""
+    from agents.auto_publisher import get_publish_log
+    log = get_publish_log()
+    return {"entries": log, "count": len(log)}
+
 
 @app.get("/api/experiments")
 async def experiments():

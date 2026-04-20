@@ -45,6 +45,19 @@ const agentConfig: Record<string, { name: string; description: string; color: st
       "Generate Facebook group responses for gig worker money problems",
     ],
   },
+  email: {
+    name: "Pulse",
+    description: "Write email campaigns, newsletters, and drip sequences for Apollo Cash users",
+    color: "#E44D8A",
+    icon: "/blaze-logo.png",
+    apiEndpoint: "/api/chat",
+    suggestions: [
+      "Write a welcome email for new Apollo Cash users",
+      "Create a 3-email drip sequence for gig workers",
+      "Draft a monthly newsletter about smart borrowing",
+      "Write a re-engagement email for inactive users",
+    ],
+  },
   research: {
     name: "Freq",
     description: "Analyze trends, audience sentiment, and adapt Apollo Cash content strategy based on engagement data",

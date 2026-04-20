@@ -82,6 +82,7 @@ export function DashboardHome() {
           { id: "seo", label: "Chat with Draft — SEO Articles & Blogs", svg: "/draft.svg", anim: "agent-icon-draft" },
           { id: "community", label: "Chat with Rally — Community Responses", svg: "/rally.svg", anim: "agent-icon-rally" },
           { id: "research", label: "Chat with Freq — Trends & Research", svg: "/freq.svg", anim: "agent-icon-freq" },
+          { id: "email", label: "Chat with Pulse — Email & Newsletters", svg: null, anim: "" },
           { id: "calendar", label: "Content Calendar — Plan your week", svg: null, anim: "" },
         ].map((item) => (
           <button

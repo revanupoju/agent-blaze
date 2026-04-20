@@ -53,11 +53,21 @@ function DraftIcon({ className }: { className?: string }) {
   );
 }
 
+function PulseIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="M22 7l-10 6L2 7" />
+    </svg>
+  );
+}
+
 const agentNav = [
   { label: "Vortex", id: "social", icon: VortexIcon },
   { label: "Draft", id: "seo", icon: DraftIcon },
   { label: "Rally", id: "community", icon: RallyIcon },
   { label: "Freq", id: "research", icon: FreqIcon },
+  { label: "Pulse", id: "email", icon: PulseIcon },
 ] as const;
 
 const workspaceNav = [
@@ -146,6 +156,9 @@ function SidebarInner({ collapsed, onNavigate }: { collapsed: boolean; onNavigat
           </div>
           <div data-coach="research">
             <NavItem icon={FreqIcon} label="Freq" isActive={current === "research"} collapsed={collapsed} onClick={() => navigate("research")} />
+          </div>
+          <div data-coach="email">
+            <NavItem icon={PulseIcon} label="Pulse" isActive={current === "email"} collapsed={collapsed} onClick={() => navigate("email")} />
           </div>
         </div>
 
