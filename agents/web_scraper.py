@@ -13,62 +13,90 @@ from datetime import datetime
 from typing import Any
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-    "Accept": "application/json",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate",
+    "Connection": "keep-alive",
+    "Cache-Control": "max-age=0",
 }
 
+# Multiple Reddit endpoints to try (fallback chain)
+REDDIT_URLS = [
+    "https://old.reddit.com/r/{sub}/{sort}.json?limit={limit}",
+    "https://www.reddit.com/r/{sub}/{sort}.json?limit={limit}&raw_json=1",
+    "https://api.reddit.com/r/{sub}/{sort}?limit={limit}",
+]
 
-# ── Reddit (free JSON API) ──────────────────────────────────────
+
+# ── Reddit (free JSON API with fallback) ────────────────────────
 
 def scrape_reddit(subreddit: str, limit: int = 10, sort: str = "hot") -> list[dict]:
-    """Fetch real posts from a subreddit using Reddit's JSON API."""
-    url = f"https://www.reddit.com/r/{subreddit}/{sort}.json?limit={limit}"
-    try:
-        resp = requests.get(url, headers=HEADERS, timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-        posts = []
-        for child in data.get("data", {}).get("children", []):
-            post = child.get("data", {})
-            posts.append({
-                "title": post.get("title", ""),
-                "body": (post.get("selftext", "") or "")[:500],
-                "author": post.get("author", ""),
-                "score": post.get("score", 0),
-                "num_comments": post.get("num_comments", 0),
-                "url": f"https://reddit.com{post.get('permalink', '')}",
-                "created": datetime.fromtimestamp(post.get("created_utc", 0)).strftime("%Y-%m-%d %H:%M"),
-                "subreddit": subreddit,
-            })
-        return posts
-    except Exception as e:
-        return [{"error": str(e), "subreddit": subreddit}]
+    """Fetch real posts from a subreddit. Tries multiple Reddit endpoints as fallback."""
+    last_error = ""
+    for url_template in REDDIT_URLS:
+        url = url_template.format(sub=subreddit, sort=sort, limit=limit)
+        try:
+            resp = requests.get(url, headers=HEADERS, timeout=15, allow_redirects=True)
+            if resp.status_code in (403, 429, 503):
+                last_error = f"{resp.status_code} from {url.split('/r/')[0]}"
+                continue
+            resp.raise_for_status()
+            data = resp.json()
+            posts = []
+            for child in data.get("data", {}).get("children", []):
+                post = child.get("data", {})
+                posts.append({
+                    "title": post.get("title", ""),
+                    "body": (post.get("selftext", "") or "")[:500],
+                    "author": post.get("author", ""),
+                    "score": post.get("score", 0),
+                    "num_comments": post.get("num_comments", 0),
+                    "url": f"https://reddit.com{post.get('permalink', '')}",
+                    "created": datetime.fromtimestamp(post.get("created_utc", 0)).strftime("%Y-%m-%d %H:%M"),
+                    "subreddit": subreddit,
+                })
+            if posts:
+                return posts
+        except Exception as e:
+            last_error = str(e)
+            continue
+    return [{"error": f"All Reddit endpoints blocked. Last error: {last_error}", "subreddit": subreddit}]
 
 
 def search_reddit(query: str, subreddit: str = "", limit: int = 10) -> list[dict]:
-    """Search Reddit for posts matching a query."""
+    """Search Reddit for posts matching a query. Tries multiple endpoints."""
     sub_part = f"r/{subreddit}/" if subreddit else ""
-    url = f"https://www.reddit.com/{sub_part}search.json?q={requests.utils.quote(query)}&limit={limit}&sort=relevance&t=month"
-    try:
-        resp = requests.get(url, headers=HEADERS, timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-        posts = []
-        for child in data.get("data", {}).get("children", []):
-            post = child.get("data", {})
-            posts.append({
-                "title": post.get("title", ""),
-                "body": (post.get("selftext", "") or "")[:500],
-                "author": post.get("author", ""),
-                "score": post.get("score", 0),
-                "num_comments": post.get("num_comments", 0),
-                "subreddit": post.get("subreddit", ""),
-                "url": f"https://reddit.com{post.get('permalink', '')}",
-            })
-        return posts
-    except Exception as e:
-        return [{"error": str(e)}]
+    q = requests.utils.quote(query)
+    urls = [
+        f"https://old.reddit.com/{sub_part}search.json?q={q}&limit={limit}&sort=relevance&t=month",
+        f"https://www.reddit.com/{sub_part}search.json?q={q}&limit={limit}&sort=relevance&t=month",
+        f"https://api.reddit.com/{sub_part}search?q={q}&limit={limit}&sort=relevance&t=month",
+    ]
+    for url in urls:
+        try:
+            resp = requests.get(url, headers=HEADERS, timeout=15, allow_redirects=True)
+            if resp.status_code in (403, 429, 503):
+                continue
+            resp.raise_for_status()
+            data = resp.json()
+            posts = []
+            for child in data.get("data", {}).get("children", []):
+                post = child.get("data", {})
+                posts.append({
+                    "title": post.get("title", ""),
+                    "body": (post.get("selftext", "") or "")[:500],
+                    "author": post.get("author", ""),
+                    "score": post.get("score", 0),
+                    "num_comments": post.get("num_comments", 0),
+                    "subreddit": post.get("subreddit", ""),
+                    "url": f"https://reddit.com{post.get('permalink', '')}",
+                })
+            if posts:
+                return posts
+        except Exception:
+            continue
+    return [{"error": "All Reddit endpoints blocked"}]
 
 
 # ── Google Trends (pytrends — no API key) ───────────────────────
