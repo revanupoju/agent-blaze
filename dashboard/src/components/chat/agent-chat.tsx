@@ -278,6 +278,43 @@ function StreamingBubble({ content, color }: { content: string; color: string })
   );
 }
 
+function PublishButton({ content }: { content: string }) {
+  const [status, setStatus] = useState<"idle" | "publishing" | "done">("idle");
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+  const handlePublish = async () => {
+    setStatus("publishing");
+    try {
+      await fetch(`${API_URL}/api/publish`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ platform: "instagram", content: { text: content.slice(0, 500), caption: content.slice(0, 300) } }),
+      });
+      setStatus("done");
+      setTimeout(() => setStatus("idle"), 3000);
+    } catch {
+      setStatus("idle");
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handlePublish}
+      disabled={status !== "idle"}
+      className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] text-muted-foreground hover:text-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
+    >
+      {status === "publishing" ? (
+        <><Loader2 className="h-3 w-3 animate-spin" /> Publishing...</>
+      ) : status === "done" ? (
+        <><Check className="h-3 w-3 text-green-500" /> Queued</>
+      ) : (
+        <><ArrowUp className="h-3 w-3" /> Publish</>
+      )}
+    </button>
+  );
+}
+
 function StaticBubble({ content }: { content: string }) {
   const { cleanContent, sources } = extractSources(content);
 
@@ -287,7 +324,8 @@ function StaticBubble({ content }: { content: string }) {
         <MarkdownContent content={cleanContent} />
         {sources.length > 0 && <SourcesPill sources={sources} />}
       </div>
-      <div className="flex items-center justify-end px-3 py-2 border-t border-black/5">
+      <div className="flex items-center justify-between px-3 py-2 border-t border-black/5">
+        <PublishButton content={content} />
         <CopyButton text={content} />
       </div>
     </div>

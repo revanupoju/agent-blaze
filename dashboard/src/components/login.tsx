@@ -45,12 +45,13 @@ export function LoginPage() {
           </h1>
 
           {/* Agent logos */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             {[
               { name: "Vortex", desc: "Social Media", icon: "/vortex.svg", anim: "agent-icon-vortex" },
               { name: "Draft", desc: "SEO Writer", icon: "/draft.svg", anim: "agent-icon-draft" },
               { name: "Rally", desc: "Community", icon: "/rally.svg", anim: "agent-icon-rally" },
               { name: "Freq", desc: "Research", icon: "/freq.svg", anim: "agent-icon-freq" },
+              { name: "Pulse", desc: "Email & Newsletters", icon: "/pulse.svg", anim: "agent-icon-freq" },
             ].map((agent) => (
               <div key={agent.name} className="flex items-center gap-3 bg-white/[0.04] rounded-xl px-4 py-3 border border-white/[0.06] hover:bg-white/[0.07] hover:border-white/[0.1] transition-all duration-200 group">
                 <img src={agent.icon} alt={agent.name} className={`h-7 w-7 brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity ${agent.anim}`} />
