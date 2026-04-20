@@ -664,34 +664,45 @@ Give 3-4 actionable content recommendations for Apollo Cash marketing. What shou
                 available = "X (Twitter), Instagram, Facebook, LinkedIn, Reddit, YouTube, TikTok, Threads, Pinterest"
                 return {"response": f"Which platform would you like to connect? Just say something like:\n\n- *Connect my Twitter*\n- *Add Instagram*\n- *Link my LinkedIn*\n\n**Available:** {available}"}
 
-        # Handle posting commands
-        is_post_command = any(kw in last_msg.lower() for kw in ["post", "publish", "schedule", "send", "share", "confirm", "yes"])
-        if is_post_command and len(last_msg.split()) >= 3:
+        # Handle posting — only when user sends actual content to post (not just "post a thread")
+        # The frontend has a dedicated Post button that sends content via /api/postiz/post
+        # Chat-based posting: only if user provides substantial content (not just a command)
+        is_post_intent = any(kw in last_msg.lower() for kw in ["post", "publish", "schedule", "send", "share", "thread"])
+        has_content = len(last_msg.split()) >= 10  # Actual content, not just a command
+
+        if is_post_intent and not has_content:
+            # User wants to post but hasn't provided content yet — ask for it
             try:
-                # Check connected channels
+                ch_resp = http_requests.get(f"{POSTIZ_URL}/integrations", headers={"Authorization": POSTIZ_KEY}, timeout=5)
+                channels = ch_resp.json() if ch_resp.ok else []
+                if channels:
+                    channel_names = ", ".join([c.get("name", c.get("providerName", "channel")) for c in channels])
+                    return {"response": f"Sure! What content would you like to post to **{channel_names}**?\n\nType or paste your content below, and I'll publish it for you."}
+                else:
+                    return {"response": "**No channels connected yet.**\n\nConnect a platform first — click the X, Instagram, or LinkedIn button above."}
+            except:
+                pass
+
+        if is_post_intent and has_content:
+            try:
                 ch_resp = http_requests.get(f"{POSTIZ_URL}/integrations", headers={"Authorization": POSTIZ_KEY}, timeout=5)
                 channels = ch_resp.json() if ch_resp.ok else []
 
-                # Extract content from conversation (find the longest message)
-                all_contents = [m.content for m in req.messages if m.role == "user" and len(m.content) > 50]
-                post_content = all_contents[-1] if all_contents else last_msg
-
                 if channels:
                     channel_names = ", ".join([c.get("name", c.get("providerName", "channel")) for c in channels])
-                    # Post via Postiz
                     post_resp = http_requests.post(
                         f"{POSTIZ_URL}/posts",
                         headers={"Authorization": POSTIZ_KEY, "Content-Type": "application/json"},
-                        json={"content": post_content[:500], "platforms": [c["id"] for c in channels]},
+                        json={"content": last_msg[:500], "platforms": [c["id"] for c in channels]},
                         timeout=10
                     )
                     if post_resp.ok:
                         result = post_resp.json()
-                        response = f"**Posted successfully!**\n\nContent sent to: {channel_names}\n\nPost ID: `{result.get('id', 'N/A')}`\n\nYou can view and manage this post in the Publish tab."
+                        response = f"**Posted successfully!**\n\nContent sent to: {channel_names}\n\nPost ID: `{result.get('id', 'N/A')}`"
                     else:
-                        response = f"**Post created** (queued for publishing)\n\nContent will be sent to: {channel_names}\n\nCheck the Publish tab to verify the schedule."
+                        response = f"**Post created** (queued for publishing)\n\nContent will be sent to: {channel_names}"
                 else:
-                    response = "**No channels connected yet.**\n\nTell me which platform to connect — e.g. *\"connect my Twitter\"* or *\"add Instagram\"*"
+                    response = "**No channels connected yet.**\n\nConnect a platform first — click the X, Instagram, or LinkedIn button above."
 
                 return {"response": response}
             except Exception as e:

@@ -367,7 +367,7 @@ function DispatchChannels({ refreshKey }: { refreshKey: number }) {
       {channels.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {channels.map((ch: any, i: number) => {
-            const pid = (ch.providerIdentifier || ch.providerName || "").toLowerCase();
+            const pid = (ch.identifier || ch.providerIdentifier || ch.providerName || "").toLowerCase();
             const platform = SOCIAL_PLATFORMS.find(p => pid.includes(p.id));
             return (
               <div key={i} className="flex items-center gap-2 glass-pill px-3 py-1.5 rounded-lg">
