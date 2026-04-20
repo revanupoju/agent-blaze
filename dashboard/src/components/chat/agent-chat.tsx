@@ -494,12 +494,12 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
                     <button
                       type="button"
                       onClick={() => {
-                        const popup = window.open("http://72.60.200.15:4007/integrations", "postiz_connect", "width=600,height=700,scrollbars=yes");
+                        const popup = window.open("http://72.60.200.15:4007/launches", "postiz_connect", "width=600,height=700,scrollbars=yes");
                         const timer = setInterval(() => { if (popup?.closed) { clearInterval(timer); setChannelRefresh(r => r + 1); } }, 1000);
                       }}
                       className="flex items-center gap-1 text-[11px] text-accent hover:underline"
                     >
-                      <Paperclip className="h-3 w-3" /> Add Channel
+                      <span className="text-[11px]">+</span> Add Channel
                     </button>
                   </div>
                   <DispatchChannels refreshKey={channelRefresh} />

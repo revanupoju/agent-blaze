@@ -251,7 +251,7 @@ function AddChannelModal({ onClose, onChannelAdded }: { onClose: () => void; onC
     setConnecting(platform);
     // Open Postiz integrations in a popup window
     const popup = window.open(
-      `${POSTIZ_URL}/integrations`,
+      `${POSTIZ_URL}/launches`,
       "postiz_connect",
       "width=600,height=700,scrollbars=yes,resizable=yes"
     );
