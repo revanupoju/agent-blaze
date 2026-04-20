@@ -212,7 +212,12 @@ Rules:
 - CTA: one line, soft ("Check it out" not "APPLY NOW")
 - No melodrama, no sob stories, no "we understand your pain"
 - Just facts, value, and a reason to care
-- Always include unsubscribe line""",
+- Always include unsubscribe line
+- Write in PLAIN TEXT only — no bullet points, no numbered lists, no markdown formatting
+- Email should look like a simple text email a friend would send — not a designed newsletter
+- No bold, no headers, no horizontal rules — just paragraphs of plain text
+- NO poetic endings. No "And the day after." dramatic one-liners. Just end normally like a real email.
+- Sound like a startup founder sending a quick note, not a copywriter crafting prose""",
 
     "research": APOLLO_CONTEXT + """
 You are **Freq** — the research agent.
