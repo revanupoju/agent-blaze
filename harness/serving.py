@@ -409,6 +409,11 @@ async def chat(req: ChatRequest):
                     relevant_keywords = ["money", "loan", "salary", "emi", "rent", "emergency", "financial", "broke", "debt", "cash", "income", "job", "unemploy", "invest", "save", "budget", "expense"]
                     threads = [t for t in threads if any(kw in (t.get("title","") + t.get("body","")).lower() for kw in relevant_keywords)][:requested_count]
 
+                if not threads:
+                    # HONEST response when no results found — NEVER fabricate
+                    sub_name = specific_sub if sub_match else "Indian finance subreddits"
+                    return {"response": f"**No relevant threads found** in r/{sub_name} right now.\n\nThis could mean:\n- The subreddit has very few recent posts\n- Reddit is blocking requests from our server\n- The subreddit name might be different (check spelling)\n\n**Try:**\n- A different subreddit: `r/personalfinanceindia`, `r/IndiaInvestments`, `r/india`\n- A broader search: \"Find threads about emergency loans on Reddit\""}
+
                 if threads:
                     # Build thread list for the LLM (ONE call for all replies)
                     thread_list = ""
