@@ -401,8 +401,17 @@ async def chat(req: ChatRequest):
         ]
     ) and len(last_msg.split()) >= 4
 
-    # For community/research: fetch REAL data and build response with Python (don't trust LLM to format it)
-    if is_research:
+    # Check if this is a follow-up question about previous results (not a new research request)
+    has_prior_context = len(req.messages) > 2 and any(
+        "real threads" in m.content.lower() or "Thread 1" in m.content or "My response:" in m.content
+        for m in req.messages if m.role == "assistant"
+    )
+    is_followup = has_prior_context and not any(
+        kw in last_msg.lower() for kw in ["find new", "scrape again", "search for", "latest from r/"]
+    )
+
+    # For community/research: fetch REAL data (but not on follow-ups — use conversation context)
+    if is_research and not is_followup:
         try:
             from agents.web_scraper import research_live, discover_threads
 
@@ -603,10 +612,12 @@ Give 3-4 actionable content recommendations for Apollo Cash marketing. What shou
     # Normal chat flow (greetings, generation requests, etc.)
     if is_generation:
         instruction = "Generate the content NOW. Do not ask questions. Be thorough, specific, and emotional."
+    elif is_followup:
+        instruction = "The user is asking a follow-up question about your previous response. Use the conversation history above to answer. Reference specific details from your earlier messages. Do NOT re-generate or re-scrape — just discuss what was already shared."
     else:
         instruction = "Respond conversationally. If greeting, introduce yourself briefly and ask what they'd like to create."
 
-    prompt = f"""Conversation:
+    prompt = f"""Full conversation history (use this for context on follow-up questions):
 {conversation_text}
 
 {instruction}"""
