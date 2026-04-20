@@ -415,7 +415,7 @@ async def chat(req: ChatRequest):
         try:
             from agents.web_scraper import research_live, discover_threads
 
-            is_community = any(kw in last_msg.lower() for kw in ["thread", "discover", "find", "reddit", "community", "respond", "reply"])
+            is_community = req.agent in ("community",) and any(kw in last_msg.lower() for kw in ["thread", "discover", "find", "reddit", "community", "respond", "reply"])
 
             if is_community:
                 import re as _re
