@@ -370,10 +370,18 @@ function DispatchChannels({ refreshKey }: { refreshKey: number }) {
             const pid = (ch.identifier || ch.providerIdentifier || ch.providerName || "").toLowerCase();
             const platform = SOCIAL_PLATFORMS.find(p => pid.includes(p.id));
             return (
-              <div key={i} className="flex items-center gap-2 glass-pill px-3 py-1.5 rounded-lg">
+              <div key={i} className="flex items-center gap-2 glass-pill px-3 py-1.5 rounded-lg group">
                 {platform ? platform.icon(`h-3.5 w-3.5 ${platform.color}`) : <CheckCircle2 className="h-3 w-3 text-green-500" />}
                 <span className="text-[12px] font-medium text-foreground">{ch.name || ch.providerName || "Channel"}</span>
                 <CheckCircle2 className="h-3 w-3 text-green-500" />
+                <button
+                  onClick={async () => {
+                    await fetch(`${API}/api/connect/${pid}`, { method: "DELETE" });
+                    window.location.reload();
+                  }}
+                  className="hidden group-hover:block text-[10px] text-red-400 hover:text-red-500 ml-1"
+                  title="Disconnect"
+                >✕</button>
               </div>
             );
           })}

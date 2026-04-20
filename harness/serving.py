@@ -1028,6 +1028,33 @@ async def connect_channel(provider: str):
         return {"error": "No OAuth URL returned"}
     return {"error": f"Postiz returned {r.status_code}"}
 
+@app.delete("/api/connect/{provider}")
+async def disconnect_channel(provider: str):
+    """Disconnect a social channel by provider name."""
+    import requests
+    cookie = await get_postiz_cookie()
+    if not cookie:
+        return {"error": "Could not authenticate with Postiz"}
+    # Get channels list to find the matching one
+    r = requests.get(f"{POSTIZ_INTERNAL}/integrations/list",
+        headers={"Authorization": f"Bearer {cookie}", "Cookie": f"auth={cookie}"},
+        timeout=10)
+    if r.ok:
+        data = r.json()
+        integrations = data.get("integrations", [])
+        for integration in integrations:
+            if integration.get("identifier", "").lower() == provider.lower():
+                # Delete this channel
+                dr = requests.delete(f"{POSTIZ_INTERNAL}/integrations",
+                    headers={"Authorization": f"Bearer {cookie}", "Cookie": f"auth={cookie}", "Content-Type": "application/json"},
+                    json={"id": integration["id"]},
+                    timeout=10)
+                if dr.ok:
+                    return {"success": True, "message": f"Disconnected {provider}"}
+                return {"error": f"Failed to disconnect: {dr.text}"}
+        return {"error": f"No {provider} channel found"}
+    return {"error": "Could not fetch channels"}
+
 @app.get("/api/experiments")
 async def experiments():
     """View autoresearch experiment stats — how many iterations, scores, improvements."""
