@@ -479,7 +479,7 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
                     <button
                       type="button"
                       onClick={() => {
-                        const popup = window.open("http://72.60.200.15:4007", "postiz_connect", "width=900,height=750,scrollbars=yes");
+                        const popup = window.open("http://72.60.200.15:4007", "_blank");
                         const timer = setInterval(() => { if (popup?.closed) { clearInterval(timer); setChannelRefresh(r => r + 1); } }, 1000);
                       }}
                       className="flex items-center gap-1 text-[11px] text-accent hover:underline"
