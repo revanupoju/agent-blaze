@@ -476,16 +476,15 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
                 <div className="w-full max-w-xl mb-6">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-[12px] font-medium text-muted-foreground/60 uppercase tracking-wider">Connected Channels</p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const popup = window.open("https://srv1317892.hstgr.cloud/auth/login", "postiz_connect", "width=900,height=750,scrollbars=yes");
-                        const timer = setInterval(() => { if (popup?.closed) { clearInterval(timer); setChannelRefresh(r => r + 1); } }, 1000);
-                      }}
+                    <a
+                      href="https://srv1317892.hstgr.cloud/launches"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => { setTimeout(() => setChannelRefresh(r => r + 1), 5000); }}
                       className="flex items-center gap-1 text-[11px] text-accent hover:underline"
                     >
                       <span className="text-[11px]">+</span> Add Channel
-                    </button>
+                    </a>
                   </div>
                   <DispatchChannels refreshKey={channelRefresh} />
                 </div>

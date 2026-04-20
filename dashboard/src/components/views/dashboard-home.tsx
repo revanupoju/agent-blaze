@@ -23,8 +23,8 @@ const agents = [
 ];
 
 export function DashboardHome() {
-  const { setActiveAgent, userName } = useUIStore();
-  const firstName = (userName || "there").split(" ")[0];
+  const { setActiveAgent, userName, isDemo } = useUIStore();
+  const firstName = isDemo ? "there" : (userName || "there").split(" ")[0];
   const formattedDate = useFormattedDate();
   const [health, setHealth] = useState<any>(null);
   const [socialCount, setSocialCount] = useState(0);
@@ -60,7 +60,7 @@ export function DashboardHome() {
   };
 
   return (
-    <div className="mx-auto max-w-[960px] px-8 py-10 stagger-children">
+    <div className="mx-auto max-w-[960px] px-6 pt-16 pb-10 lg:px-8 lg:pt-10 stagger-children">
       {/* Greeting */}
       <div className="mb-8">
         <h1 className="text-[36px] text-foreground leading-tight" style={{ fontFamily: "var(--font-serif)" }}>

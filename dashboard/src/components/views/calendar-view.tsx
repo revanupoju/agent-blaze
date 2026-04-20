@@ -245,23 +245,6 @@ function ComposeModal({
 // ── Add Channel Modal ──────────────────────────────────────────
 
 function AddChannelModal({ onClose, onChannelAdded }: { onClose: () => void; onChannelAdded: () => void }) {
-  const [connecting, setConnecting] = useState<string | null>(null);
-
-  const handleConnect = (platform: string) => {
-    setConnecting(platform);
-    // Open Postiz integrations in a popup window
-    const popup = window.open("https://srv1317892.hstgr.cloud/auth/login", "postiz_connect", "width=900,height=750,scrollbars=yes");
-
-    // Poll for popup close — when user finishes OAuth and closes popup
-    const timer = setInterval(() => {
-      if (popup?.closed) {
-        clearInterval(timer);
-        setConnecting(null);
-        onChannelAdded(); // Refresh channels
-      }
-    }, 1000);
-  };
-
   return (
     <>
       <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm" onClick={onClose} />
@@ -276,35 +259,33 @@ function AddChannelModal({ onClose, onChannelAdded }: { onClose: () => void; onC
             </button>
           </div>
           <p className="px-6 pt-4 text-[13px] text-muted-foreground">
-            Select a platform to connect. A popup will open for authentication — once you authorize, the channel will appear automatically.
+            Select a platform to connect. You'll be taken to Postiz to authenticate — once done, come back and your channel will appear.
           </p>
           <div className="p-6 grid grid-cols-3 gap-3">
             {availableChannels.map((ch) => (
-              <button
+              <a
                 key={ch.key}
-                onClick={() => handleConnect(ch.key)}
-                disabled={connecting !== null}
-                className={cn(
-                  "glass rounded-xl p-5 text-center hover:shadow-md transition-all group cursor-pointer disabled:opacity-50",
-                  connecting === ch.key && "ring-2 ring-accent"
-                )}
+                href={`${POSTIZ_URL}/launches`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glass rounded-xl p-5 text-center hover:shadow-md transition-all group cursor-pointer block"
               >
-                {connecting === ch.key ? (
-                  <Loader2 className="h-7 w-7 mx-auto mb-2 animate-spin text-accent" />
-                ) : (
-                  <PlatformLogo name={ch.key} className={cn("h-7 w-7 mx-auto mb-2", platformColors[ch.key] || "text-foreground", "opacity-70 group-hover:opacity-100 transition-opacity")} />
-                )}
+                <PlatformLogo name={ch.key} className={cn("h-7 w-7 mx-auto mb-2", platformColors[ch.key] || "text-foreground", "opacity-70 group-hover:opacity-100 transition-opacity")} />
                 <p className="text-[13px] font-medium text-foreground">{ch.name}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  {connecting === ch.key ? "Connecting..." : "Connect"}
-                </p>
-              </button>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Connect</p>
+              </a>
             ))}
           </div>
-          <div className="px-6 py-4 border-t border-border">
-            <p className="text-[11px] text-muted-foreground text-center">
+          <div className="px-6 py-4 border-t border-border flex items-center justify-between">
+            <p className="text-[11px] text-muted-foreground">
               Channels connect via secure OAuth — your credentials are never stored in Blaze
             </p>
+            <button
+              onClick={onChannelAdded}
+              className="text-[12px] font-medium text-accent hover:underline"
+            >
+              Done
+            </button>
           </div>
         </div>
       </div>
