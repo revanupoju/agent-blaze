@@ -384,14 +384,39 @@ async def chat(req: ChatRequest):
             is_community = any(kw in last_msg.lower() for kw in ["thread", "discover", "find", "reddit", "community", "respond", "reply"])
 
             if is_community:
-                data = discover_threads()
-                threads = [t for t in data.get("threads", []) if "error" not in t and t.get("title")][:5]
+                import re as _re
+                from agents.web_scraper import scrape_reddit, search_reddit
+
+                # Parse user's message for specific subreddit and count
+                sub_match = _re.search(r'r/(\w+)|/r/(\w+)|subreddit\s+(\w+)', last_msg)
+                count_match = _re.search(r'(\d+)\s*(latest|recent|top|post|thread)', last_msg)
+                requested_count = int(count_match.group(1)) if count_match else 5
+
+                if sub_match:
+                    # User asked for a specific subreddit
+                    specific_sub = sub_match.group(1) or sub_match.group(2) or sub_match.group(3)
+                    # Scrape that specific subreddit
+                    raw_posts = scrape_reddit(specific_sub, limit=requested_count, sort="new")
+                    threads = [t for t in raw_posts if "error" not in t and t.get("title")][:requested_count]
+                else:
+                    # Default: discover across Indian finance subreddits
+                    data = discover_threads()
+                    threads = [t for t in data.get("threads", []) if "error" not in t and t.get("title")][:requested_count]
+
+                # Filter: only threads relevant to money/finance/India for Apollo Cash responses
+                # (skip dog rescue, legal drama, etc.)
+                if not sub_match:
+                    relevant_keywords = ["money", "loan", "salary", "emi", "rent", "emergency", "financial", "broke", "debt", "cash", "income", "job", "unemploy", "invest", "save", "budget", "expense"]
+                    threads = [t for t in threads if any(kw in (t.get("title","") + t.get("body","")).lower() for kw in relevant_keywords)][:requested_count]
 
                 if threads:
                     # Build thread list for the LLM (ONE call for all replies)
                     thread_list = ""
                     for i, t in enumerate(threads):
-                        mention = "Mention Apollo Cash as ONE option among others" if i < 3 else "Do NOT mention Apollo Cash — pure advice only"
+                        # Only mention Apollo Cash if the thread is about money/loans AND is Indian context
+                        is_money_thread = any(kw in (t.get("title","") + t.get("body","")).lower() for kw in ["loan","money","salary","emi","rent","cash","broke"])
+                        is_india = any(kw in (t.get("title","") + t.get("body","") + t.get("subreddit","")).lower() for kw in ["india","inr","rupee","lakh","crore","mumbai","delhi","bangalore"])
+                        mention = "Mention Apollo Cash as ONE option among others" if is_money_thread and is_india and i < 3 else "Do NOT mention Apollo Cash or any loan app — give pure helpful advice only"
                         length = "short (2-3 sentences)" if i % 2 == 0 else "detailed (4-6 sentences)"
                         thread_list += f"""
 THREAD {i+1}: r/{t.get('subreddit','')} — "{t['title']}"
