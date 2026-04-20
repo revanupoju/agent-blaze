@@ -83,7 +83,7 @@ export function DashboardHome() {
           { id: "community", label: "Chat with Rally — Community Responses", svg: "/rally.svg", anim: "agent-icon-rally" },
           { id: "research", label: "Chat with Freq — Trends & Research", svg: "/freq.svg", anim: "agent-icon-freq" },
           { id: "email", label: "Chat with Pulse — Email & Newsletters", svg: null, anim: "" },
-          { id: "calendar", label: "Content Calendar — Plan your week", svg: null, anim: "" },
+          { id: "calendar", label: "Publish — Schedule & post to all channels", svg: null, anim: "" },
         ].map((item) => (
           <button
             key={item.id}

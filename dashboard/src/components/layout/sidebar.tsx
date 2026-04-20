@@ -70,7 +70,7 @@ const agentNav = [
 ] as const;
 
 const workspaceNav = [
-  { label: "Content Calendar", id: "calendar", icon: Calendar },
+  { label: "Publish", id: "calendar", icon: Calendar },
 ] as const;
 
 const allNav = [...coreNav, ...agentNav, ...workspaceNav];
