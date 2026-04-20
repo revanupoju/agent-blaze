@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ArrowUp, Check, ChevronDown, Copy, Image as ImageIcon, Loader2, Paperclip, Sparkles, Video } from "lucide-react";
+import { ArrowUp, Check, CheckCircle2, ChevronDown, Copy, Image as ImageIcon, Loader2, Paperclip, Sparkles, Video } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
@@ -332,6 +332,43 @@ function StaticBubble({ content }: { content: string }) {
   );
 }
 
+// ── Dispatch channels widget ───────────────────────────────────
+
+function DispatchChannels({ refreshKey }: { refreshKey: number }) {
+  const [channels, setChannels] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`${API}/api/postiz/channels`)
+      .then(r => r.json())
+      .then(d => { setChannels(Array.isArray(d.channels) ? d.channels : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [refreshKey]);
+
+  if (loading) return <div className="flex items-center gap-2 text-[12px] text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> Loading channels...</div>;
+
+  if (channels.length === 0) {
+    return (
+      <div className="glass rounded-xl p-4 text-center">
+        <p className="text-[13px] text-muted-foreground">No channels connected yet</p>
+        <p className="text-[11px] text-muted-foreground/60 mt-1">Click "Add Channel" above to connect Instagram, Twitter, etc.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {channels.map((ch: any, i: number) => (
+        <div key={i} className="flex items-center gap-2 glass-pill px-3 py-1.5 rounded-lg">
+          <CheckCircle2 className="h-3 w-3 text-green-500" />
+          <span className="text-[12px] font-medium text-foreground">{ch.name || ch.providerName || "Channel"}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Main chat component ────────────────────────────────────────
 
 export function AgentChat({ agent, config }: { agent: string; config: AgentConfig }) {
@@ -345,6 +382,7 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
   const [model, setModel] = useState("cerebras:qwen-3-235b-a22b-instruct-2507");
   const [latestStreamId, setLatestStreamId] = useState<string | null>(null);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [channelRefresh, setChannelRefresh] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -448,6 +486,25 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
               </div>
               <h2 className="text-[26px] text-foreground mb-2" style={{ fontFamily: "var(--font-serif)" }}>{config.name}</h2>
               <p className="text-[14px] text-muted-foreground mb-10 text-center max-w-md leading-relaxed">{config.description}</p>
+              {/* Connected channels for Dispatch */}
+              {agent === "dispatch" && (
+                <div className="w-full max-w-xl mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[12px] font-medium text-muted-foreground/60 uppercase tracking-wider">Connected Channels</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const popup = window.open("http://72.60.200.15:4007/integrations", "postiz_connect", "width=600,height=700,scrollbars=yes");
+                        const timer = setInterval(() => { if (popup?.closed) { clearInterval(timer); setChannelRefresh(r => r + 1); } }, 1000);
+                      }}
+                      className="flex items-center gap-1 text-[11px] text-accent hover:underline"
+                    >
+                      <Paperclip className="h-3 w-3" /> Add Channel
+                    </button>
+                  </div>
+                  <DispatchChannels refreshKey={channelRefresh} />
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 w-full max-w-xl">
                 {config.suggestions.map((s) => (
                   <button key={s} type="button" onClick={() => send(s)}
