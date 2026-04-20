@@ -166,7 +166,7 @@ function SidebarInner({ collapsed, onNavigate }: { collapsed: boolean; onNavigat
           {!collapsed && <p className="px-2.5 py-2 text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.12em]">Workspace</p>}
           {collapsed && <div className="w-5 h-px bg-border mx-auto my-2" />}
           <div data-coach="calendar">
-            <NavItem icon={Calendar} label="Content Calendar" isActive={current === "calendar"} collapsed={collapsed} onClick={() => navigate("calendar")} />
+            <NavItem icon={Send} label="Publish" isActive={current === "calendar"} collapsed={collapsed} onClick={() => navigate("calendar")} />
           </div>
         </div>
 

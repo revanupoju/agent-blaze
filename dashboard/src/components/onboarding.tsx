@@ -37,8 +37,8 @@ const STEPS: CoachStep[] = [
   },
   {
     selector: '[data-coach="calendar"]',
-    title: "Content Calendar",
-    description: "Plan your week. Generate a 7-day content schedule with posts timed for when each audience segment is most active across all platforms.",
+    title: "Publish",
+    description: "Schedule and auto-publish content to Instagram, Twitter, Facebook, Reddit, and more — powered by Postiz, self-hosted on your own server.",
     position: "right",
   },
   {
