@@ -406,11 +406,12 @@ async def chat(req: ChatRequest):
                     data = discover_threads()
                     threads = [t for t in data.get("threads", []) if "error" not in t and t.get("title")][:requested_count]
 
-                # Filter: only threads relevant to money/finance/India for Apollo Cash responses
-                # (skip dog rescue, legal drama, etc.)
+                # Filter: only when using default discovery (not specific subreddit request)
                 if not sub_match:
                     relevant_keywords = ["money", "loan", "salary", "emi", "rent", "emergency", "financial", "broke", "debt", "cash", "income", "job", "unemploy", "invest", "save", "budget", "expense"]
-                    threads = [t for t in threads if any(kw in (t.get("title","") + t.get("body","")).lower() for kw in relevant_keywords)][:requested_count]
+                    filtered = [t for t in threads if any(kw in (t.get("title","") + t.get("body","")).lower() for kw in relevant_keywords)]
+                    if filtered:
+                        threads = filtered[:requested_count]
 
                 if not threads:
                     # HONEST response when no results found — NEVER fabricate
