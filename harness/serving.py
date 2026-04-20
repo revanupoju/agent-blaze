@@ -237,8 +237,10 @@ Rules:
 OUTPUT_RULES = """
 
 FORMAT: Use clean Markdown. **Bold** for emphasis. ## headers. - bullets.
-No horizontal rules. No decorative characters. No raw JSON. Minimal emoji.
-Let whitespace do the work."""
+No horizontal rules. No decorative characters. No raw JSON.
+NEVER use emojis — no ✅, no 🟢, no 📈, no 💸, no checkmarks. Zero emojis anywhere.
+Let whitespace do the work.
+NEVER fabricate source links, Reddit scores, or YouTube view counts. If you cite a source, it must be real. If you can't verify it, don't include a Sources section."""
 
 
 # ── Promotional Language Filter ─────────────────────────────────
