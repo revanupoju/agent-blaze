@@ -302,11 +302,36 @@ def self_evaluate_and_improve(content: str, agent: str) -> str:
             content=content,
             system_prompt=system,
             llm_fn=llm_fn,
-            max_iterations=2,  # Keep it fast for chat (2 rounds max)
+            max_iterations=2,
             threshold=7.0,
             agent_name=agent,
         )
-        return result["best_content"]
+        best = result["best_content"]
+
+        # Append quality scorecard to social/content outputs
+        if agent in ("social", "seo", "community", "email") and len(best) > 300:
+            eval_prompt = f"""Score this marketing content on these 8 criteria (1-10 each). Be strict.
+Return ONLY this format, nothing else:
+Hook: X/10
+Visual Direction: X/10
+Emotion: X/10
+Specificity: X/10
+Brand Mention: X/10
+CTA: X/10
+Length: X/10
+Hinglish Touch: X/10
+Average: X.X/10
+
+Content:
+{best[:1500]}"""
+            try:
+                scores = llm_fn("You are a strict content evaluator. Output ONLY the scores in the exact format requested.", eval_prompt, 0.2, 300)
+                if "Average:" in scores:
+                    best += f"\n\n---\n\n**Quality Scorecard** *(autoresearch evaluation)*\n\n{scores.strip()}"
+            except Exception:
+                pass
+
+        return best
     except Exception:
         return content
 

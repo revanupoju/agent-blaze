@@ -82,6 +82,23 @@ Blaze is built as a 5-layer system where every layer is swappable independently.
 | `get_google_trends` | Live Google Trends data | (internal — feeds Freq) |
 | `discover_threads` | Cross-subreddit thread discovery | (internal — feeds Rally) |
 
+## Content Evaluation Framework
+
+Every piece of content is scored against 8 dimensions before delivery:
+
+| Criteria | What It Measures | Score Range |
+|----------|-----------------|-------------|
+| **Hook** | Does the first line stop someone scrolling? | 1-10 |
+| **Visual Direction** | Are scenes filmable? Specific objects, settings, lighting? | 1-10 |
+| **Emotion** | Does it make you feel something — shame, relief, hope, humor? | 1-10 |
+| **Specificity** | Real amounts (₹), times, places — not vague generalities? | 1-10 |
+| **Brand Mention** | Subtle and natural? Max 60% of posts? No feature dumps? | 1-10 |
+| **CTA** | Zero hard CTAs. Ends with feeling, not "download now" | 1-10 |
+| **Length** | Appropriate for format — carousel slides 1-2 sentences, reels 30s | 1-10 |
+| **Hinglish Touch** | Natural Hindi-English mix when appropriate, not forced | 1-10 |
+
+Content scoring below 7/10 average triggers the autoresearch self-improvement loop for rewriting.
+
 ## Self-Improvement Engine (Autoresearch Pattern)
 
 Inspired by [Karpathy's autoresearch](https://github.com/karpathy/autoresearch), every piece of generated content goes through a recursive improvement loop:
