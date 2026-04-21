@@ -497,6 +497,65 @@ async def chat(req: ChatRequest):
         kw in last_msg.lower() for kw in ["find new", "scrape again", "search for", "latest from r/"]
     )
 
+    # Browserbase-powered browsing — for Instagram, Quora, any URL
+    if is_research and not is_followup:
+        is_instagram = any(kw in last_msg.lower() for kw in ["instagram", "insta", "@", "competitor"])
+        is_quora = any(kw in last_msg.lower() for kw in ["quora"])
+        is_browse_url = any(kw in last_msg.lower() for kw in ["browse", "open", "visit", "check out", "analyze page", "scrape"])
+
+        if is_instagram:
+            import re as _re
+            handle_match = _re.search(r'@(\w+)|instagram\.com/(\w+)', last_msg)
+            if handle_match:
+                handle = handle_match.group(1) or handle_match.group(2)
+                try:
+                    from agents.browser_skill import browse_instagram
+                    posts = await browse_instagram(handle)
+                    if posts and "error" not in posts[0]:
+                        parts = [f"## Instagram Analysis: @{handle}\n*Browsed via Browserbase cloud Chrome*\n"]
+                        for i, p in enumerate(posts):
+                            parts.append(f"**Post {i+1}:** {p.get('alt', p.get('caption', 'No caption'))}")
+                        parts.append("")
+                        data_summary = "\n".join(parts)
+                        insight_prompt = f"Based on this Instagram data from @{handle}:\n\n{data_summary}\n\nGive 3-4 content strategy insights for Apollo Cash marketing. What can we learn from their approach?"
+                        insights = llm_call(system, insight_prompt, temp=0.7, max_tok=1000)
+                        parts.append("### Insights\n")
+                        parts.append(insights)
+                        return {"response": "\n".join(parts)}
+                except Exception as e:
+                    print(f"[BROWSERBASE] Instagram error: {e}")
+
+        if is_quora:
+            try:
+                from agents.browser_skill import browse_quora
+                query = last_msg.lower().replace("quora", "").replace("search", "").replace("find", "").strip()
+                if len(query) < 5:
+                    query = "personal loan India emergency"
+                results = await browse_quora(query)
+                if results and "error" not in results[0]:
+                    quora_content = results[0].get("content", "")
+                    if quora_content:
+                        insight_prompt = f"Based on this Quora data about '{query}':\n\n{quora_content[:2000]}\n\nWrite 3 authentic Quora-style answers about emergency loans. Each answer should sound like a different person."
+                        responses = llm_call(system, insight_prompt, temp=0.8, max_tok=2000)
+                        return {"response": f"## Quora Research: \"{query}\"\n*Browsed via Browserbase cloud Chrome*\n\n{responses}"}
+            except Exception as e:
+                print(f"[BROWSERBASE] Quora error: {e}")
+
+        if is_browse_url:
+            import re as _re
+            url_match = _re.search(r'https?://\S+', last_msg)
+            if url_match:
+                try:
+                    from agents.browser_skill import browse
+                    result = await browse(url=url_match.group(0))
+                    if result.get("status") == "success":
+                        page_content = result.get("content", "")[:2000]
+                        insight_prompt = f"I just browsed {url_match.group(0)} and extracted this:\n\n{page_content}\n\nSummarize what this page is about and give 2-3 content ideas inspired by it for Apollo Cash marketing."
+                        insights = llm_call(system, insight_prompt, temp=0.7, max_tok=1000)
+                        return {"response": f"## Browsed: {result.get('title', url_match.group(0))}\n*Via Browserbase cloud Chrome*\n\n{insights}"}
+                except Exception as e:
+                    print(f"[BROWSERBASE] Browse error: {e}")
+
     # For community/research: fetch REAL data (but not on follow-ups — use conversation context)
     if is_research and not is_followup:
         try:
