@@ -36,7 +36,13 @@ async def _get_browser():
             resp = http_req.post(
                 "https://api.browserbase.com/v1/sessions",
                 headers={"x-bb-api-key": BROWSERBASE_API_KEY, "Content-Type": "application/json"},
-                json={"browserSettings": {"blockAds": True}},
+                json={
+                    "browserSettings": {
+                        "blockAds": True,
+                        "solveCaptchas": True,
+                    },
+                    "proxies": True,
+                },
                 timeout=15
             )
             if resp.ok:
