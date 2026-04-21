@@ -121,6 +121,13 @@ CRITICAL DATA INTEGRITY RULES:
 - If real data is provided to you, use ONLY that data
 - If no real data is provided, say "I need to scan Reddit first — ask me to find threads from a specific subreddit"
 - NEVER invent features that Apollo Cash doesn't have. It is ONLY a personal loan app.
+
+URL AND LINK RULES (STRICT — NO EXCEPTIONS):
+- NEVER generate, fabricate, or guess URLs. Every URL you output must come from real scraped data.
+- NEVER create article links (e.g. economictimes.com/..., medium.com/...). Reference articles by title only.
+- The ONLY URLs you may include: the Apollo Cash Play Store link, and URLs that were provided to you in scraped data.
+- If you don't have a real URL, just mention the article/post by title — never invent a link.
+- NEVER create "Sources" sections with fabricated URLs at the end of your response.
 """
 
 AGENT_PERSONAS = {
@@ -517,9 +524,14 @@ async def chat(req: ChatRequest):
                 if result.get("status") == "success":
                     page_content = result.get("content", "")[:2000]
                     page_title = result.get("title", url_match.group(0))
-                    insight_prompt = f"I just browsed {url_match.group(0)} ({page_title}) and extracted this content:\n\n{page_content}\n\nBased on this real data:\n1. Summarize what this page covers\n2. Give 3-4 actionable content ideas for Apollo Cash marketing inspired by what you found\n3. Recommend which agent (Vortex, Draft, Rally) should create each piece"
+                    insight_prompt = f"I just browsed {url_match.group(0)} ({page_title}) and extracted this content:\n\n{page_content}\n\nBased on this real data:\n1. Summarize what this page covers\n2. Give 3-4 actionable content ideas for Apollo Cash marketing inspired by what you found\n3. Recommend which agent (Vortex, Draft, Rally) should create each piece\n\nCRITICAL: Do NOT generate any URLs or links. Do NOT create fake article URLs. Only reference article titles by name without links."
                     insights = llm_call(system, insight_prompt, temp=0.7, max_tok=1500)
-                    return {"response": f"## Browsed: {page_title}\n*Via Browserbase cloud Chrome*\n\n{insights}"}
+                    # Strip any hallucinated URLs (LLM fabricates article links)
+                    import re as _url_re
+                    insights = _url_re.sub(r'\[([^\]]+)\]\(https?://[^\)]+\)', r'\1', insights)  # [text](url) → text
+                    insights = _url_re.sub(r'https?://economictimes\S+', '', insights)  # bare ET URLs
+                    insights = _url_re.sub(r'https?://(?!agentblaze|play\.google)\S+articleshow\S+', '', insights)  # articleshow URLs
+                    return {"response": f"## Browsed: {page_title}\n*Via Browserbase cloud Chrome*\n*Source: {url_match.group(0)}*\n\n{insights}"}
                 else:
                     return {"response": f"**Could not browse {url_match.group(0)}** — {result.get('message', 'unknown error')}. The site may be blocking automated access."}
             except Exception as e:
