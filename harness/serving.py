@@ -509,10 +509,13 @@ async def chat(req: ChatRequest):
             handle_match = _re.search(r'@(\w+)|instagram\.com/(\w+)', last_msg)
             if handle_match:
                 handle = handle_match.group(1) or handle_match.group(2)
+                print(f"[BROWSERBASE] Browsing Instagram @{handle}")
                 try:
-                    from agents.browser_skill import browse_instagram
+                    from agents.browser_skill import browse_instagram, browse
                     posts = await browse_instagram(handle)
-                    if posts and "error" not in posts[0]:
+                    print(f"[BROWSERBASE] Instagram result: {posts[:1]}")
+                    has_error = any("error" in str(p) for p in posts)
+                    if posts and not has_error:
                         parts = [f"## Instagram Analysis: @{handle}\n*Browsed via Browserbase cloud Chrome*\n"]
                         for i, p in enumerate(posts):
                             parts.append(f"**Post {i+1}:** {p.get('alt', p.get('caption', 'No caption'))}")
@@ -523,8 +526,18 @@ async def chat(req: ChatRequest):
                         parts.append("### Insights\n")
                         parts.append(insights)
                         return {"response": "\n".join(parts)}
+                    else:
+                        # Instagram blocked — try browsing the page directly
+                        result = await browse(url=f"https://www.instagram.com/{handle}/")
+                        if result.get("status") == "success":
+                            page_text = result.get("content", "")[:2000]
+                            insight_prompt = f"I browsed Instagram @{handle} and found:\n\n{page_text}\n\nAnalyze their content strategy and give 3-4 insights for Apollo Cash."
+                            insights = llm_call(system, insight_prompt, temp=0.7, max_tok=1000)
+                            return {"response": f"## Instagram Analysis: @{handle}\n*Browsed via Browserbase cloud Chrome*\n\n{insights}"}
+                        return {"response": f"**Could not access @{handle}'s Instagram** — the profile may be private or Instagram is blocking automated access. Try a different handle or check manually."}
                 except Exception as e:
                     print(f"[BROWSERBASE] Instagram error: {e}")
+                    return {"response": f"**Browserbase error:** {str(e)[:200]}\n\nInstagram may be blocking automated access."}
 
         if is_quora:
             try:
