@@ -1193,6 +1193,27 @@ async def upload_media(file: UploadFile = FastAPIFile(...)):
         return {"url": data.get("path", ""), "id": data.get("id", "")}
     return {"error": f"Upload failed: {r.text}"}
 
+@app.post("/api/browse")
+async def browser_browse(url: str = "", task: str = ""):
+    """Use browser-use to browse a webpage and extract data."""
+    from agents.browser_skill import browse
+    result = await browse(task=task, url=url)
+    return result
+
+@app.post("/api/browse/reddit")
+async def browser_reddit(subreddit: str = "personalfinanceindia", keywords: str = "loan salary emergency"):
+    """Use browser-use to browse Reddit (bypasses API blocks)."""
+    from agents.browser_skill import browse_reddit
+    posts = await browse_reddit(subreddit, keywords)
+    return {"posts": posts}
+
+@app.post("/api/browse/instagram")
+async def browser_instagram(handle: str = ""):
+    """Analyze a competitor's Instagram using browser-use."""
+    from agents.browser_skill import browse_instagram
+    posts = await browse_instagram(handle)
+    return {"posts": posts}
+
 @app.get("/api/experiments")
 async def experiments():
     """View autoresearch experiment stats — how many iterations, scores, improvements."""
