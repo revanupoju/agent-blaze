@@ -21,7 +21,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 _browser_available = False
 
 try:
-    from browser_use import Agent as BrowserAgent, Browser, BrowserConfig
+    from browser_use import Agent as BrowserAgent, Browser
     from langchain_openai import ChatOpenAI
     _browser_available = True
     print("[BROWSER-USE] Available")
@@ -29,7 +29,6 @@ except Exception as _import_err:
     print(f"[BROWSER-USE] Import failed: {_import_err}")
 
 BROWSERBASE_API_KEY = os.environ.get("BROWSERBASE_API_KEY", "bb_live_qD8Nxl3vLXlAjexBPO-6gvjc-a0")
-BROWSERBASE_PROJECT_ID = os.environ.get("BROWSERBASE_PROJECT_ID", "")
 
 
 def _get_llm():
@@ -46,11 +45,7 @@ def _get_llm():
 def _get_browser():
     """Get browser instance — Browserbase cloud or local Playwright."""
     if BROWSERBASE_API_KEY:
-        config = BrowserConfig(
-            cdp_url=f"wss://connect.browserbase.com?apiKey={BROWSERBASE_API_KEY}",
-        )
-        return Browser(config=config)
-    # Fallback to local Playwright
+        return Browser(config={"cdp_url": f"wss://connect.browserbase.com?apiKey={BROWSERBASE_API_KEY}"})
     return Browser()
 
 
