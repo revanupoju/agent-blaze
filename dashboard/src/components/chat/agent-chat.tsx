@@ -507,7 +507,7 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
       const res = await fetch(`${API}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: chatHistory, agent, model }),
+        body: JSON.stringify({ messages: chatHistory, agent, model, session_id: threadId }),
         signal: controller.signal,
       });
       clearTimeout(timeout);

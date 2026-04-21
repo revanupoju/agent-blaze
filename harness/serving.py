@@ -55,6 +55,7 @@ class ChatRequest(BaseModel):
     messages: list[ChatMessage]
     agent: str = "social"
     model: str = ""
+    session_id: str = ""
 
 class SocialPostRequest(BaseModel):
     count: int = 5
@@ -385,6 +386,37 @@ def self_evaluate_and_improve(content: str, agent: str) -> str:
         return content
 
 
+# ── Session Memory (server-side conversation history) ──────────
+
+from collections import OrderedDict
+
+class SessionStore:
+    """Server-side conversation memory. Keeps last 50 sessions."""
+    def __init__(self, max_sessions=50):
+        self._sessions: OrderedDict[str, list[dict]] = OrderedDict()
+        self._max = max_sessions
+
+    def get(self, session_id: str) -> list[dict]:
+        return self._sessions.get(session_id, [])
+
+    def update(self, session_id: str, messages: list[dict]) -> None:
+        if session_id in self._sessions:
+            self._sessions.move_to_end(session_id)
+        self._sessions[session_id] = messages[-20:]  # Keep last 20 messages per session
+        while len(self._sessions) > self._max:
+            self._sessions.popitem(last=False)
+
+    def get_last_response(self, session_id: str) -> str:
+        """Get the last assistant response for this session."""
+        msgs = self.get(session_id)
+        for m in reversed(msgs):
+            if m.get("role") == "assistant":
+                return m.get("content", "")
+        return ""
+
+sessions = SessionStore()
+
+
 # ── Chat Endpoint ───────────────────────────────────────────────
 
 @app.post("/api/chat")
@@ -396,6 +428,17 @@ async def chat(req: ChatRequest):
     last_msg = req.messages[-1].content if req.messages else ""
     agent_context = memory.get_agent_context(req.agent, last_msg)
     memory_section = f"\n\n{agent_context}" if agent_context else ""
+
+    # Server-side session: merge frontend messages with server history
+    if req.session_id:
+        server_history = sessions.get(req.session_id)
+        if server_history:
+            # Use server history as base, append any new messages from frontend
+            existing_contents = {m["content"] for m in server_history}
+            for m in req.messages:
+                if m.content not in existing_contents:
+                    server_history.append({"role": m.role, "content": m.content})
+            req.messages = [ChatMessage(role=m["role"], content=m["content"]) for m in server_history]
 
     system = base_system + OUTPUT_RULES + memory_section + "\n\nToday's date is April 21, 2026. Use this exact date when referencing 'today' or 'this week'."
 
@@ -785,6 +828,12 @@ Give 3-4 actionable content recommendations for Apollo Cash marketing. What shou
         memory.add_agent_memory(req.agent, chat_msgs, response)
     except Exception:
         pass
+
+    # Update server-side session memory
+    if req.session_id:
+        session_msgs = [{"role": m.role, "content": m.content} for m in req.messages]
+        session_msgs.append({"role": "assistant", "content": response})
+        sessions.update(req.session_id, session_msgs)
 
     return {"response": response}
 
