@@ -21,26 +21,21 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 _browser_available = False
 
 try:
-    from browser_use import Agent as BrowserAgent
+    from browser_use import Agent as BrowserAgent, Browser, BrowserConfig
     from langchain_openai import ChatOpenAI
     _browser_available = True
     print("[BROWSER-USE] Available")
 except ImportError:
     print("[BROWSER-USE] Not installed — using fallback scraping")
 
+BROWSERBASE_API_KEY = os.environ.get("BROWSERBASE_API_KEY", "bb_live_qD8Nxl3vLXlAjexBPO-6gvjc-a0")
+BROWSERBASE_PROJECT_ID = os.environ.get("BROWSERBASE_PROJECT_ID", "")
+
 
 def _get_llm():
-    """Get LLM for browser-use agent. Uses Cerebras via OpenAI-compatible API."""
+    """Get LLM for browser-use agent."""
     api_key = os.environ.get("CEREBRAS_API_KEY", "")
-
-    class CerebrasLLM(ChatOpenAI):
-        """ChatOpenAI subclass with provider attribute for browser-use."""
-        provider: str = "openai"
-
-        class Config:
-            arbitrary_types_allowed = True
-
-    return CerebrasLLM(
+    return ChatOpenAI(
         model="qwen-3-235b-a22b-instruct-2507",
         base_url="https://api.cerebras.ai/v1",
         api_key=api_key,
@@ -48,16 +43,19 @@ def _get_llm():
     )
 
 
+def _get_browser():
+    """Get browser instance — Browserbase cloud or local Playwright."""
+    if BROWSERBASE_API_KEY:
+        config = BrowserConfig(
+            cdp_url=f"wss://connect.browserbase.com?apiKey={BROWSERBASE_API_KEY}",
+        )
+        return Browser(config=config)
+    # Fallback to local Playwright
+    return Browser()
+
+
 async def browse(task: str, url: str = "") -> dict:
-    """Run a browser-use agent to complete a web task.
-
-    Args:
-        task: Natural language description of what to do
-        url: Optional starting URL
-
-    Returns:
-        dict with status, result, and optional file path
-    """
+    """Run a browser-use agent to complete a web task."""
     if not _browser_available:
         return {"status": "unavailable", "message": "browser-use not installed"}
 
@@ -66,9 +64,11 @@ async def browse(task: str, url: str = "") -> dict:
         if url:
             full_task = f"Go to {url}. Then: {task}"
 
+        browser = _get_browser()
         agent = BrowserAgent(
             task=full_task,
             llm=_get_llm(),
+            browser=browser,
         )
         result = await agent.run()
 
