@@ -499,8 +499,10 @@ async def chat(req: ChatRequest):
     )
 
     # Browserbase-powered browsing — for Instagram, Quora, any URL
+    print(f"[DEBUG] is_research={is_research}, is_followup={is_followup}, last_msg={last_msg[:50]}")
     if is_research and not is_followup:
         is_instagram = any(kw in last_msg.lower() for kw in ["instagram", "insta", "@", "competitor"])
+        print(f"[DEBUG] is_instagram={is_instagram}")
         is_quora = any(kw in last_msg.lower() for kw in ["quora"])
         is_browse_url = any(kw in last_msg.lower() for kw in ["browse", "open", "visit", "check out", "analyze page", "scrape"])
 
