@@ -21,15 +21,25 @@ from pathlib import Path
 LOG_DIR = Path(__file__).parent.parent / "output" / "experiments"
 
 
-def evaluate_content(content: str, llm_fn) -> dict:
+def evaluate_content(content: str, llm_fn, agent_name: str = "unknown") -> dict:
     """Score content on 5 dimensions. Returns scores + weaknesses."""
-    eval_prompt = f"""Rate this marketing content strictly. Score each 1-10:
-
-1. RELATABILITY — Would someone in tier 2/3 India think "this is my life"?
+    # Emails are allowed to mention product — adjust criteria
+    if agent_name == "email":
+        criteria = """1. RELATABILITY — Would the reader think "they get me"?
+2. TONE — Does it sound like a friend texting, not a corporation emailing?
+3. EMOTIONAL IMPACT — Does it make you feel something real?
+4. SPECIFICITY — Real details (₹ amounts, situations, names) or generic?
+5. READABILITY — Short sentences, easy to scan, no jargon?"""
+    else:
+        criteria = """1. RELATABILITY — Would someone in tier 2/3 India think "this is my life"?
 2. AUTHENTICITY — Does it sound like a real person or a brand?
 3. EMOTIONAL IMPACT — Does it make you feel something?
 4. SPECIFICITY — Real details (₹ amounts, times, places) or vague?
-5. NON-PROMOTIONAL — Free of "apply now", feature lists, CTAs?
+5. NON-PROMOTIONAL — Free of "apply now", feature lists, CTAs?"""
+
+    eval_prompt = f"""Rate this marketing content strictly. Score each 1-10:
+
+{criteria}
 
 Content:
 {content[:1000]}
@@ -100,7 +110,7 @@ def autoresearch_loop(
 
     for iteration in range(max_iterations):
         # Evaluate (like running train.py and checking val_bpb)
-        evaluation = evaluate_content(current if iteration > 0 else content, llm_fn)
+        evaluation = evaluate_content(current if iteration > 0 else content, llm_fn, agent_name)
         score = evaluation["average"]
 
         experiment = {
