@@ -469,7 +469,23 @@ export function AgentChat({ agent, config }: { agent: string; config: AgentConfi
   const send = async (text: string) => {
     if (!text.trim() || loading) return;
 
-    const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: text.trim() };
+    // Upload media files first (for Dispatch)
+    let mediaUrls: string[] = [];
+    if (agent === "dispatch" && mediaFiles.length > 0) {
+      for (const file of mediaFiles) {
+        try {
+          const formData = new FormData();
+          formData.append("file", file);
+          const uploadRes = await fetch(`${API}/api/media/upload`, { method: "POST", body: formData });
+          const uploadData = await uploadRes.json();
+          if (uploadData.url) mediaUrls.push(uploadData.url);
+        } catch {}
+      }
+      setMediaFiles([]);
+    }
+
+    const mediaNote = mediaUrls.length > 0 ? `\n\n[Attached media: ${mediaUrls.join(", ")}]` : "";
+    const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: text.trim() + mediaNote };
     const assistantId = crypto.randomUUID();
     const placeholder: Message = { id: assistantId, role: "assistant", content: "", loading: true };
     const newMessages = [...messages, userMsg, placeholder];

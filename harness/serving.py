@@ -673,6 +673,14 @@ Give 3-4 actionable content recommendations for Apollo Cash marketing. What shou
                 if not post_content:
                     return {"response": f"Sure! What content would you like to post to **{channel_names}**?\n\nType or paste your content below, and I'll publish it for you."}
 
+                # Extract media URLs if attached
+                import re
+                media_match = re.findall(r'\[Attached media: (.*?)\]', post_content)
+                image_urls = []
+                if media_match:
+                    image_urls = [u.strip() for u in media_match[0].split(",")]
+                    post_content = re.sub(r'\s*\[Attached media:.*?\]', '', post_content).strip()
+
                 # Preview the content before posting
                 preview = post_content[:150] + ("..." if len(post_content) > 150 else "")
                 from datetime import datetime as dt_now
@@ -683,7 +691,7 @@ Give 3-4 actionable content recommendations for Apollo Cash marketing. What shou
                     "tags": [],
                     "posts": [{
                         "integration": {"id": c["id"]},
-                        "value": [{"content": post_content[:500], "image": []}],
+                        "value": [{"content": post_content[:500], "image": [{"path": url} for url in image_urls]}],
                         "settings": {"who_can_reply_post": "everyone"}
                     } for c in channels]
                 }
@@ -1032,6 +1040,24 @@ async def disconnect_channel(provider: str):
                 return {"error": f"Failed to disconnect: {dr.text}"}
         return {"error": f"No {provider} channel found"}
     return {"error": "Could not fetch channels"}
+
+from fastapi import UploadFile, File as FastAPIFile
+
+@app.post("/api/media/upload")
+async def upload_media(file: UploadFile = FastAPIFile(...)):
+    """Upload media file to Postiz and return the URL."""
+    import requests
+    contents = await file.read()
+    r = requests.post(
+        f"{POSTIZ_URL}/upload",
+        headers={"Authorization": POSTIZ_KEY},
+        files={"file": (file.filename, contents, file.content_type)},
+        timeout=30
+    )
+    if r.ok:
+        data = r.json()
+        return {"url": data.get("path", ""), "id": data.get("id", "")}
+    return {"error": f"Upload failed: {r.text}"}
 
 @app.get("/api/experiments")
 async def experiments():
