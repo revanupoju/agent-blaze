@@ -390,7 +390,13 @@ def self_evaluate_and_improve(content: str, agent: str) -> str:
 async def chat(req: ChatRequest):
     """Conversational chat with live web data and self-improvement."""
     base_system = AGENT_PERSONAS.get(req.agent, AGENT_PERSONAS["social"])
-    system = base_system + OUTPUT_RULES + "\n\nToday's date is April 19, 2026. Use this exact date when referencing 'today' or 'this week'."
+
+    # Retrieve relevant memories for this agent + query
+    last_msg = req.messages[-1].content if req.messages else ""
+    agent_context = memory.get_agent_context(req.agent, last_msg)
+    memory_section = f"\n\n{agent_context}" if agent_context else ""
+
+    system = base_system + OUTPUT_RULES + memory_section + "\n\nToday's date is April 21, 2026. Use this exact date when referencing 'today' or 'this week'."
 
     import os
 
@@ -770,6 +776,14 @@ Give 3-4 actionable content recommendations for Apollo Cash marketing. What shou
     if is_generation and len(response) > 200:
         response = strip_promotional_language(response)
         response = self_evaluate_and_improve(response, req.agent)
+
+    # Store conversation in Mem0 for future context
+    try:
+        chat_msgs = [{"role": m.role, "content": m.content} for m in req.messages]
+        chat_msgs.append({"role": "assistant", "content": response[:500]})
+        memory.add_agent_memory(req.agent, chat_msgs, response)
+    except Exception:
+        pass
 
     return {"response": response}
 
