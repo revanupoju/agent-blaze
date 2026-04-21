@@ -621,7 +621,9 @@ etc."""
                 data = research_live(topic)
 
                 # Build research response with Python
-                parts = [f"## Live Research Results\n*Scanned Reddit and Google Trends just now*\n"]
+                sources_count = 0
+                source_names = []
+                parts = [f"## Live Research Results\n*Scanned 5 data sources just now*\n"]
 
                 reddit_posts = data.get("reddit", {}).get("posts", [])
                 if reddit_posts:
@@ -630,6 +632,8 @@ etc."""
                     for p in real_posts:
                         parts.append(f"- **\"{p['title']}\"** — r/{p.get('subreddit','')} ({p.get('score',0)} upvotes, {p.get('num_comments',0)} comments)")
                     parts.append("")
+                    sources_count += 1
+                    source_names.append("Reddit")
 
                 trends = data.get("google_trends", {}).get("trends", {})
                 if trends:
@@ -637,6 +641,8 @@ etc."""
                     for kw, d in trends.items():
                         parts.append(f"- **{kw}**: {d.get('trend','stable')} (interest: {d.get('current','N/A')}/100)")
                     parts.append("")
+                    sources_count += 1
+                    source_names.append("Google Trends")
 
                 related = data.get("google_trends", {}).get("related_queries", {})
                 if related:
@@ -644,6 +650,39 @@ etc."""
                         if r.get("rising_queries"):
                             parts.append(f"- Rising searches for **{kw}**: {', '.join(r['rising_queries'][:5])}")
                     parts.append("")
+
+                # Hacker News
+                hn = data.get("hackernews", {})
+                if hn.get("posts"):
+                    parts.append(f"### Hacker News ({len(hn['posts'])} relevant stories)\n")
+                    for p in hn["posts"]:
+                        parts.append(f"- **\"{p['title']}\"** — {p.get('score',0)} points, {p.get('comments',0)} comments")
+                    parts.append("")
+                    sources_count += 1
+                    source_names.append("Hacker News")
+
+                # YouTube
+                yt = data.get("youtube", {})
+                if yt.get("videos"):
+                    parts.append(f"### YouTube (top videos for \"{yt.get('query', topic)}\")\n")
+                    for v in yt["videos"]:
+                        parts.append(f"- [{v['title']}]({v['url']})")
+                    parts.append("")
+                    sources_count += 1
+                    source_names.append("YouTube")
+
+                # X/Twitter Trends
+                xt = data.get("x_trends", {})
+                if xt.get("trends"):
+                    parts.append("### X/Twitter Trending (India)\n")
+                    for t in xt["trends"][:7]:
+                        parts.append(f"- {t['topic']}")
+                    parts.append("")
+                    sources_count += 1
+                    source_names.append("X Trends")
+
+                # Update header with actual source count
+                parts[0] = f"## Live Research Results\n*Scanned {sources_count} sources: {', '.join(source_names)}*\n"
 
                 # Now ask LLM for insights BASED on the real data
                 data_summary = "\n".join(parts)

@@ -246,6 +246,70 @@ def research_live(topic: str = "personal loan India") -> dict:
         "posts": all_reddit_posts[:15],
     }
 
+    # Hacker News — top stories related to fintech/India
+    try:
+        hn_resp = requests.get("https://hacker-news.firebaseio.com/v0/topstories.json", timeout=10)
+        if hn_resp.ok:
+            story_ids = hn_resp.json()[:30]
+            hn_posts = []
+            for sid in story_ids[:30]:
+                try:
+                    s = requests.get(f"https://hacker-news.firebaseio.com/v0/item/{sid}.json", timeout=5).json()
+                    title = s.get("title", "").lower()
+                    if any(kw in title for kw in ["fintech", "india", "loan", "credit", "gig", "payment", "upi", "lending", "banking", "salary"]):
+                        hn_posts.append({
+                            "title": s.get("title", ""),
+                            "url": s.get("url", f"https://news.ycombinator.com/item?id={sid}"),
+                            "score": s.get("score", 0),
+                            "comments": s.get("descendants", 0),
+                            "source": "hackernews",
+                        })
+                except Exception:
+                    continue
+            if hn_posts:
+                results["hackernews"] = {"posts": hn_posts[:5], "total": len(hn_posts)}
+    except Exception:
+        pass
+
+    # YouTube Trending — search for relevant finance content (no API key, scrape search)
+    try:
+        yt_query = requests.utils.quote(f"{topic} India")
+        yt_resp = requests.get(
+            f"https://www.youtube.com/results?search_query={yt_query}&sp=CAI%253D",
+            headers=HEADERS, timeout=10
+        )
+        if yt_resp.ok:
+            import re
+            video_titles = re.findall(r'"title":\{"runs":\[\{"text":"([^"]+)"\}', yt_resp.text)
+            video_ids = re.findall(r'"videoId":"([^"]+)"', yt_resp.text)
+            yt_results = []
+            seen = set()
+            for title, vid in zip(video_titles, video_ids):
+                if vid not in seen and len(yt_results) < 5:
+                    seen.add(vid)
+                    yt_results.append({"title": title, "video_id": vid, "url": f"https://youtube.com/watch?v={vid}", "source": "youtube"})
+            if yt_results:
+                results["youtube"] = {"videos": yt_results, "query": topic}
+    except Exception:
+        pass
+
+    # Twitter/X Trends — scrape trending topics for India (no API needed)
+    try:
+        # Use an unofficial trends endpoint
+        trends_resp = requests.get(
+            "https://trends24.in/india/",
+            headers=HEADERS, timeout=10
+        )
+        if trends_resp.ok:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(trends_resp.text, "html.parser")
+            trend_cards = soup.select("li a.trend-link")
+            x_trends = [{"topic": t.get_text(strip=True), "source": "x_trends"} for t in trend_cards[:10]]
+            if x_trends:
+                results["x_trends"] = {"trends": x_trends, "region": "India"}
+    except Exception:
+        pass
+
     # Google Trends
     keywords = [topic]
     if "loan" in topic.lower():
