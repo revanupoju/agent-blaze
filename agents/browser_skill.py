@@ -28,7 +28,7 @@ except ImportError:
 
 async def _get_browser():
     """Connect to Browserbase cloud Chrome or local Playwright."""
-    p = await async_playwright().__aenter__()
+    p = await async_playwright().start()
     if BROWSERBASE_API_KEY:
         # Browserbase: create session via API, then connect via CDP
         import requests as http_req
@@ -70,7 +70,7 @@ async def browse(url: str, extract: str = "main content") -> dict:
         content = await page.evaluate("() => document.body.innerText.substring(0, 5000)")
 
         await browser.close()
-        await p.__aexit__(None, None, None)
+        await p.stop()
 
         # Save
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
