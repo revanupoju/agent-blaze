@@ -15,7 +15,8 @@ from pathlib import Path
 OUTPUT_DIR = Path(__file__).parent.parent / "output" / "browser"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-BROWSERBASE_API_KEY = os.environ.get("BROWSERBASE_API_KEY", "")
+def _get_bb_key():
+    return os.environ.get("BROWSERBASE_API_KEY", "")
 
 _available = False
 try:
@@ -29,13 +30,14 @@ except ImportError:
 async def _get_browser():
     """Connect to Browserbase cloud Chrome or local Playwright."""
     p = await async_playwright().start()
-    if BROWSERBASE_API_KEY:
+    bb_key = _get_bb_key()
+    if bb_key:
         # Browserbase: create session via API, then connect via CDP
         import requests as http_req
         try:
             resp = http_req.post(
                 "https://api.browserbase.com/v1/sessions",
-                headers={"x-bb-api-key": BROWSERBASE_API_KEY, "Content-Type": "application/json"},
+                headers={"x-bb-api-key": bb_key, "Content-Type": "application/json"},
                 json={
                     "browserSettings": {
                         "blockAds": True,
@@ -46,7 +48,7 @@ async def _get_browser():
             if resp.ok:
                 session = resp.json()
                 session_id = session.get('id', '')
-                connect_url = session.get('connectUrl', f"wss://connect.browserbase.com?apiKey={BROWSERBASE_API_KEY}&sessionId={session_id}")
+                connect_url = session.get('connectUrl', f"wss://connect.browserbase.com?apiKey={bb_key}&sessionId={session_id}")
                 print(f"[BROWSER] Browserbase session: {session_id}, connecting...")
                 browser = await p.chromium.connect_over_cdp(connect_url)
                 print(f"[BROWSER] Browserbase connected!")
