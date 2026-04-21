@@ -485,6 +485,7 @@ async def chat(req: ChatRequest):
         kw in last_msg.lower() for kw in [
             "find", "discover", "search", "browse", "trending", "trend",
             "what are people", "reddit", "competitor", "research", "analyze",
+            "instagram", "insta", "quora", "@",
         ]
     ) and len(last_msg.split()) >= 4
 
