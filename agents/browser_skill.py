@@ -27,16 +27,30 @@ except ImportError:
 
 
 async def _get_browser():
-    """Connect to Browserbase cloud Chrome."""
+    """Connect to Browserbase cloud Chrome or local Playwright."""
     p = await async_playwright().__aenter__()
     if BROWSERBASE_API_KEY:
-        browser = await p.chromium.connect_over_cdp(
-            f"wss://connect.browserbase.com?apiKey={BROWSERBASE_API_KEY}"
-        )
-        print("[BROWSER] Connected to Browserbase")
-    else:
-        browser = await p.chromium.launch(headless=True)
-        print("[BROWSER] Using local Chromium")
+        # Browserbase: create session via API, then connect via CDP
+        import requests as http_req
+        try:
+            resp = http_req.post(
+                "https://api.browserbase.com/v1/sessions",
+                headers={"x-bb-api-key": BROWSERBASE_API_KEY, "Content-Type": "application/json"},
+                json={"browserSettings": {"blockAds": True}},
+                timeout=15
+            )
+            if resp.ok:
+                session = resp.json()
+                connect_url = f"wss://connect.browserbase.com?apiKey={BROWSERBASE_API_KEY}&sessionId={session['id']}"
+                browser = await p.chromium.connect_over_cdp(connect_url)
+                print(f"[BROWSER] Browserbase session: {session['id']}")
+                return p, browser
+        except Exception as e:
+            print(f"[BROWSER] Browserbase error: {e}")
+
+    # Fallback to local
+    browser = await p.chromium.launch(headless=True)
+    print("[BROWSER] Using local Chromium")
     return p, browser
 
 
