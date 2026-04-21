@@ -165,9 +165,16 @@ Respond to real threads like a genuine person, not a brand account.
 
 STRICT RELEVANCE RULES:
 - ONLY respond to threads about: money problems, loans, salary delays, EMI, rent, medical bills, bike repairs, gig work income, financial emergencies, credit scores, borrowing, banking issues
-- NEVER respond to threads about: politics, religion, relationships, dating, sexuality, career advice, tech reviews, food, travel, memes, or anything unrelated to personal finance
-- If a thread is not about money/finance, SKIP IT completely — do not write a response
+- NEVER respond to threads about: politics, religion, relationships, dating, sexuality, career advice, tech reviews, food, travel, memes, investments, mutual funds, stocks, SIPs, or anything unrelated to personal lending
+- If a thread is not about money/finance EMERGENCIES, SKIP IT completely — do not write a response
 - If you have 10 threads and only 2 are relevant, respond to ONLY those 2
+
+COMPLIANCE — NEVER DO THIS:
+- NEVER give investment advice (mutual funds, stocks, SIPs, portfolio allocation) — Apollo Finvest is NOT a SEBI-registered advisor
+- NEVER recommend specific funds, stocks, ETFs, or insurance products
+- NEVER say "consider tilting toward large-cap" or any investment guidance
+- ONLY talk about emergency lending, salary advances, and short-term cash needs
+- If a thread is about investments/SIPs/mutual funds, SKIP IT — do not respond
 
 RESPONSE RULES:
 - HELP FIRST. Solve their problem before mentioning Apollo Cash.
@@ -463,9 +470,13 @@ async def chat(req: ChatRequest):
                     data = discover_threads()
                     threads = [t for t in data.get("threads", []) if "error" not in t and t.get("title")][:requested_count]
 
-                # Always filter for finance-relevant threads — never respond to unrelated posts
-                relevant_keywords = ["money", "loan", "salary", "emi", "rent", "emergency", "financial", "broke", "debt", "cash", "income", "job", "unemploy", "invest", "save", "budget", "expense", "credit", "borrow", "payment", "bank", "upi", "paytm", "phonepe", "gig", "delivery", "swiggy", "zomato", "ola", "uber", "freelance", "medical", "hospital", "repair", "insurance", "mutual fund", "sip"]
-                filtered = [t for t in threads if any(kw in (t.get("title","") + t.get("body","")).lower() for kw in relevant_keywords)]
+                # Always filter for lending-relevant threads — never respond to unrelated posts
+                relevant_keywords = ["loan", "salary", "emi", "rent", "emergency", "broke", "debt", "cash", "borrow", "payment", "upi", "gig", "delivery", "swiggy", "zomato", "ola", "uber", "freelance", "medical", "hospital", "repair", "salary delay", "money problem", "need money", "urgent cash", "credit score", "cibil", "personal loan", "advance"]
+                # Exclude investment/advisory threads (SEBI compliance)
+                exclude_keywords = ["mutual fund", "sip", "stock", "nifty", "sensex", "portfolio", "etf", "investment", "returns", "dividend", "share market", "demat", "trading", "insurance", "term plan", "lic"]
+                filtered = [t for t in threads
+                    if any(kw in (t.get("title","") + t.get("body","")).lower() for kw in relevant_keywords)
+                    and not any(kw in (t.get("title","") + t.get("body","")).lower() for kw in exclude_keywords)]
                 if filtered:
                     threads = filtered[:requested_count]
                 else:
