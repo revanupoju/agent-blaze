@@ -1195,24 +1195,30 @@ async def upload_media(file: UploadFile = FastAPIFile(...)):
 
 @app.post("/api/browse")
 async def browser_browse(url: str = "", task: str = ""):
-    """Use browser-use to browse a webpage and extract data."""
+    """Browse a URL with cloud Chrome (Browserbase) and extract content."""
     from agents.browser_skill import browse
-    result = await browse(task=task, url=url)
-    return result
+    return await browse(url=url, extract=task)
 
 @app.post("/api/browse/reddit")
-async def browser_reddit(subreddit: str = "personalfinanceindia", keywords: str = "loan salary emergency"):
-    """Use browser-use to browse Reddit (bypasses API blocks)."""
+async def browser_reddit(subreddit: str = "personalfinanceindia"):
+    """Browse Reddit with real Chrome — bypasses all API blocks."""
     from agents.browser_skill import browse_reddit
-    posts = await browse_reddit(subreddit, keywords)
-    return {"posts": posts}
+    posts = await browse_reddit(subreddit)
+    return {"posts": posts, "source": "browserbase"}
 
 @app.post("/api/browse/instagram")
 async def browser_instagram(handle: str = ""):
-    """Analyze a competitor's Instagram using browser-use."""
+    """Analyze a competitor's Instagram with real Chrome."""
     from agents.browser_skill import browse_instagram
     posts = await browse_instagram(handle)
-    return {"posts": posts}
+    return {"posts": posts, "source": "browserbase"}
+
+@app.post("/api/browse/quora")
+async def browser_quora(query: str = "personal loan India"):
+    """Browse Quora with real Chrome."""
+    from agents.browser_skill import browse_quora
+    results = await browse_quora(query)
+    return {"results": results, "source": "browserbase"}
 
 @app.get("/api/experiments")
 async def experiments():

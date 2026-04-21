@@ -1,11 +1,8 @@
 """
-Browser Use Skill — Real web browsing for agents.
+Browser Skill — Real web browsing via Browserbase (cloud Chrome).
 
-Uses browser-use (https://github.com/browser-use/browser-use) with Playwright
-to give agents the ability to browse the real web: read Reddit threads, Quora
-answers, competitor Instagram, and any JS-heavy page.
-
-Runs headless Chromium via Playwright on Railway.
+Uses Playwright + Browserbase to browse JS-heavy pages that JSON APIs can't reach.
+No local Chrome needed — runs in the cloud.
 """
 
 from __future__ import annotations
@@ -18,148 +15,145 @@ from pathlib import Path
 OUTPUT_DIR = Path(__file__).parent.parent / "output" / "browser"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-_browser_available = False
+BROWSERBASE_API_KEY = os.environ.get("BROWSERBASE_API_KEY", "")
 
+_available = False
 try:
-    from browser_use import Agent as BrowserAgent, Browser
-    from langchain_openai import ChatOpenAI
-    _browser_available = True
-    print("[BROWSER-USE] Available")
-except Exception as _import_err:
-    print(f"[BROWSER-USE] Import failed: {_import_err}")
-
-BROWSERBASE_API_KEY = os.environ.get("BROWSERBASE_API_KEY", "bb_live_qD8Nxl3vLXlAjexBPO-6gvjc-a0")
+    from playwright.async_api import async_playwright
+    _available = True
+    print("[BROWSER] Playwright available")
+except ImportError:
+    print("[BROWSER] Playwright not installed")
 
 
-def _get_llm():
-    """Get LLM for browser-use agent."""
-    api_key = os.environ.get("CEREBRAS_API_KEY", "")
-    return ChatOpenAI(
-        model="qwen-3-235b-a22b-instruct-2507",
-        base_url="https://api.cerebras.ai/v1",
-        api_key=api_key,
-        temperature=0.3,
-    )
-
-
-def _get_browser():
-    """Get browser instance — Browserbase cloud or local Playwright."""
+async def _get_browser():
+    """Connect to Browserbase cloud Chrome."""
+    p = await async_playwright().__aenter__()
     if BROWSERBASE_API_KEY:
-        return Browser(config={"cdp_url": f"wss://connect.browserbase.com?apiKey={BROWSERBASE_API_KEY}"})
-    return Browser()
+        browser = await p.chromium.connect_over_cdp(
+            f"wss://connect.browserbase.com?apiKey={BROWSERBASE_API_KEY}"
+        )
+        print("[BROWSER] Connected to Browserbase")
+    else:
+        browser = await p.chromium.launch(headless=True)
+        print("[BROWSER] Using local Chromium")
+    return p, browser
 
 
-async def browse(task: str, url: str = "") -> dict:
-    """Run a browser-use agent to complete a web task."""
-    if not _browser_available:
-        return {"status": "unavailable", "message": "browser-use not installed"}
+async def browse(url: str, extract: str = "main content") -> dict:
+    """Browse a URL and extract content using Playwright."""
+    if not _available:
+        return {"status": "unavailable", "message": "Playwright not installed"}
 
     try:
-        full_task = task
-        if url:
-            full_task = f"Go to {url}. Then: {task}"
+        p, browser = await _get_browser()
+        page = await browser.new_page()
+        await page.goto(url, timeout=30000, wait_until="domcontentloaded")
+        await page.wait_for_timeout(2000)  # Wait for JS rendering
 
-        browser = _get_browser()
-        agent = BrowserAgent(
-            task=full_task,
-            llm=_get_llm(),
-            browser=browser,
-        )
-        result = await agent.run()
+        # Extract page content
+        title = await page.title()
+        content = await page.evaluate("() => document.body.innerText.substring(0, 5000)")
 
-        # Save results
+        await browser.close()
+        await p.__aexit__(None, None, None)
+
+        # Save
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filepath = OUTPUT_DIR / f"browse_{timestamp}.json"
         with open(filepath, "w") as f:
-            json.dump({
-                "task": task,
-                "url": url,
-                "result": str(result),
-                "timestamp": timestamp,
-            }, f, indent=2)
+            json.dump({"url": url, "title": title, "content": content[:3000], "timestamp": timestamp}, f, indent=2)
 
-        return {"status": "success", "result": str(result), "file": str(filepath)}
+        return {"status": "success", "title": title, "content": content[:3000], "file": str(filepath)}
 
     except Exception as e:
         return {"status": "error", "message": str(e)[:500]}
 
 
-async def browse_reddit(subreddit: str, keywords: str = "loan emergency salary", limit: int = 5) -> list[dict]:
-    """Browse a subreddit using a real browser and extract posts."""
-    if not _browser_available:
-        return [{"error": "browser-use not available"}]
+async def browse_reddit(subreddit: str, limit: int = 5) -> list[dict]:
+    """Browse Reddit and extract post titles, scores, comments."""
+    if not _available:
+        return [{"error": "Playwright not available"}]
 
-    task = f"""
-    Go to https://www.reddit.com/r/{subreddit}/
-    Find the {limit} most recent posts that mention any of these keywords: {keywords}
-    For each post, extract:
-    - title (exact text)
-    - body text (first 200 characters)
-    - number of comments
-    - number of upvotes
-    - author username
-    Return ONLY a JSON array with these fields: title, body, num_comments, score, author
-    """
-    result = await browse(task)
-    if result.get("status") == "success":
-        try:
-            return json.loads(result["result"])
-        except (json.JSONDecodeError, TypeError):
-            return [{"title": "Browser result", "body": result["result"][:500], "source": "browser-use"}]
-    return [{"error": result.get("message", "Unknown error")}]
+    try:
+        p, browser = await _get_browser()
+        page = await browser.new_page()
+        await page.goto(f"https://old.reddit.com/r/{subreddit}/", timeout=30000)
+        await page.wait_for_timeout(2000)
+
+        # Extract posts using old.reddit.com structure (simpler HTML)
+        posts = await page.evaluate(f"""() => {{
+            const entries = document.querySelectorAll('.thing.link');
+            const results = [];
+            for (let i = 0; i < Math.min(entries.length, {limit}); i++) {{
+                const e = entries[i];
+                const title = e.querySelector('a.title')?.innerText || '';
+                const score = e.querySelector('.score.unvoted')?.innerText || '0';
+                const comments = e.querySelector('.comments')?.innerText || '0';
+                const author = e.querySelector('.author')?.innerText || '';
+                const href = e.querySelector('a.title')?.href || '';
+                results.push({{ title, score, comments: comments.split(' ')[0], author, url: href }});
+            }}
+            return results;
+        }}""")
+
+        await browser.close()
+        await p.__aexit__(None, None, None)
+        return posts
+
+    except Exception as e:
+        return [{"error": str(e)[:300]}]
+
+
+async def browse_instagram(handle: str, limit: int = 5) -> list[dict]:
+    """Browse a public Instagram profile and extract recent posts."""
+    if not _available:
+        return [{"error": "Playwright not available"}]
+
+    try:
+        p, browser = await _get_browser()
+        page = await browser.new_page()
+        await page.goto(f"https://www.instagram.com/{handle}/", timeout=30000)
+        await page.wait_for_timeout(3000)
+
+        # Extract post data from the page
+        posts = await page.evaluate(f"""() => {{
+            const imgs = document.querySelectorAll('article img');
+            const results = [];
+            for (let i = 0; i < Math.min(imgs.length, {limit}); i++) {{
+                results.push({{
+                    alt: imgs[i].alt || '',
+                    src: imgs[i].src || '',
+                    type: 'photo'
+                }});
+            }}
+            return results;
+        }}""")
+
+        await browser.close()
+        await p.__aexit__(None, None, None)
+        return posts
+
+    except Exception as e:
+        return [{"error": str(e)[:300]}]
 
 
 async def browse_quora(query: str, limit: int = 5) -> list[dict]:
-    """Browse Quora and extract question + answer pairs."""
-    if not _browser_available:
-        return [{"error": "browser-use not available"}]
+    """Search Quora and extract questions + answer previews."""
+    if not _available:
+        return [{"error": "Playwright not available"}]
 
-    task = f"""
-    Go to https://www.quora.com/search?q={query.replace(' ', '+')}
-    Find the top {limit} questions related to "{query}".
-    For each question, extract:
-    - question title
-    - top answer preview (first 200 characters)
-    - number of answers
-    Return ONLY a JSON array with fields: question, answer_preview, num_answers
-    """
-    result = await browse(task)
-    if result.get("status") == "success":
-        try:
-            return json.loads(result["result"])
-        except (json.JSONDecodeError, TypeError):
-            return [{"question": query, "answer_preview": result["result"][:500], "source": "browser-use"}]
-    return [{"error": result.get("message", "Unknown error")}]
+    try:
+        p, browser = await _get_browser()
+        page = await browser.new_page()
+        await page.goto(f"https://www.quora.com/search?q={query.replace(' ', '+')}", timeout=30000)
+        await page.wait_for_timeout(3000)
 
+        content = await page.evaluate("() => document.body.innerText.substring(0, 5000)")
 
-async def browse_instagram(handle: str, post_count: int = 5) -> list[dict]:
-    """Browse a public Instagram profile and analyze recent posts."""
-    if not _browser_available:
-        return [{"error": "browser-use not available"}]
+        await browser.close()
+        await p.__aexit__(None, None, None)
+        return [{"query": query, "content": content[:2000], "source": "quora"}]
 
-    task = f"""
-    Go to https://www.instagram.com/{handle}/
-    Look at their {post_count} most recent posts.
-    For each post, extract:
-    - caption text (first 150 characters)
-    - number of likes (approximate)
-    - number of comments
-    - post type (photo, video, or carousel)
-    Return ONLY a JSON array with fields: caption, likes, comments, type
-    """
-    result = await browse(task)
-    if result.get("status") == "success":
-        try:
-            return json.loads(result["result"])
-        except (json.JSONDecodeError, TypeError):
-            return [{"caption": result["result"][:500], "source": "browser-use"}]
-    return [{"error": result.get("message", "Unknown error")}]
-
-
-async def browse_page(url: str, extract: str = "main content") -> dict:
-    """Browse any URL and extract specified content."""
-    if not _browser_available:
-        return {"error": "browser-use not available"}
-
-    task = f"Go to {url}. Extract: {extract}. Return the extracted text."
-    return await browse(task, url)
+    except Exception as e:
+        return [{"error": str(e)[:300]}]
