@@ -498,9 +498,8 @@ async def chat(req: ChatRequest):
         kw in last_msg.lower() for kw in ["find new", "scrape again", "search for", "latest from r/"]
     )
 
-    # Browserbase-powered browsing — for Instagram, Quora, any URL
-    print(f"[DEBUG] is_research={is_research}, is_followup={is_followup}, last_msg={last_msg[:50]}")
-    if is_research and not is_followup:
+    # Browserbase-powered browsing — only for Freq (research) and Rally (community)
+    if is_research and not is_followup and req.agent in ("research", "community"):
         is_instagram = any(kw in last_msg.lower() for kw in ["instagram", "insta", "@", "competitor"])
         print(f"[DEBUG] is_instagram={is_instagram}")
         is_quora = any(kw in last_msg.lower() for kw in ["quora"])
@@ -573,7 +572,7 @@ async def chat(req: ChatRequest):
                     print(f"[BROWSERBASE] Browse error: {e}")
 
     # For community/research: fetch REAL data (but not on follow-ups — use conversation context)
-    if is_research and not is_followup:
+    if is_research and not is_followup and req.agent in ("research", "community"):
         try:
             from agents.web_scraper import research_live, discover_threads
 
