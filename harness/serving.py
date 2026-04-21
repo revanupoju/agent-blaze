@@ -356,29 +356,7 @@ def self_evaluate_and_improve(content: str, agent: str) -> str:
         )
         best = result["best_content"]
 
-        # Append quality scorecard ONLY for script/reel/video content
-        is_script = any(kw in best.lower() for kw in ["reel script", "visual:", "[visual", "voiceover", "scene:", "hook:", "dialogue:"])
-        if agent == "social" and is_script and len(best) > 300:
-            eval_prompt = f"""Score this video/reel script on these 8 criteria (1-10 each). Be strict.
-Return ONLY this format, nothing else:
-Hook: X/10
-Visual Direction: X/10
-Emotion: X/10
-Specificity: X/10
-Brand Mention: X/10
-CTA: X/10
-Length: X/10
-Hinglish Touch: X/10
-Average: X.X/10
-
-Script:
-{best[:1500]}"""
-            try:
-                scores = llm_fn("You are a strict content evaluator. Output ONLY the scores in the exact format requested.", eval_prompt, 0.2, 300)
-                if "Average:" in scores:
-                    best += f"\n\n**Quality Scorecard**\n\n{scores.strip()}"
-            except Exception:
-                pass
+        # Quality scorecard removed — not needed for demo
 
         return best
     except Exception:

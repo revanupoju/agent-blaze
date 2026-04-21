@@ -375,9 +375,10 @@ function DispatchChannels({ refreshKey }: { refreshKey: number }) {
                 <span className="text-[12px] font-medium text-foreground">{ch.name || ch.providerName || "Channel"}</span>
                 <CheckCircle2 className="h-3 w-3 text-green-500" />
                 <button
-                  onClick={async () => {
+                  onClick={async (e) => {
+                    e.preventDefault();
                     await fetch(`${API}/api/connect/${pid}`, { method: "DELETE" });
-                    window.location.reload();
+                    setChannels(prev => prev.filter((_, idx) => idx !== i));
                   }}
                   className="hidden group-hover:block text-[10px] text-red-400 hover:text-red-500 ml-1"
                   title="Disconnect"
