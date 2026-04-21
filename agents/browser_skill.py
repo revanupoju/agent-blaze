@@ -25,8 +25,8 @@ try:
     from langchain_openai import ChatOpenAI
     _browser_available = True
     print("[BROWSER-USE] Available")
-except ImportError:
-    print("[BROWSER-USE] Not installed — using fallback scraping")
+except Exception as _import_err:
+    print(f"[BROWSER-USE] Import failed: {_import_err}")
 
 BROWSERBASE_API_KEY = os.environ.get("BROWSERBASE_API_KEY", "bb_live_qD8Nxl3vLXlAjexBPO-6gvjc-a0")
 BROWSERBASE_PROJECT_ID = os.environ.get("BROWSERBASE_PROJECT_ID", "")
