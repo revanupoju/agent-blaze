@@ -16,6 +16,7 @@ const agentConfig: Record<string, { name: string; description: string; color: st
       "Write a reel script about bike repair emergencies for gig workers",
       "Generate 5 Instagram carousel posts about salary delay problems",
       "Create a Twitter thread busting myths about personal loans",
+      "Write a meme caption about month-end salary delays",
     ],
   },
   seo: {
@@ -28,6 +29,7 @@ const agentConfig: Record<string, { name: string; description: string; color: st
       "Write an article targeting 'instant personal loan app India'",
       "Create a guide on 'how to get a loan without CIBIL score'",
       "Generate a comparison article: borrowing from friends vs loan apps",
+      "Write a landing page for emergency salary advance",
     ],
   },
   community: {
@@ -40,6 +42,7 @@ const agentConfig: Record<string, { name: string; description: string; color: st
       "Generate responses for Reddit threads about emergency loans",
       "Write Quora answers about getting loans without credit history",
       "Create Twitter replies for people complaining about salary delays",
+      "Find Reddit threads where people discuss personal loan apps",
     ],
   },
   dispatch: {
@@ -51,6 +54,7 @@ const agentConfig: Record<string, { name: string; description: string; color: st
     suggestions: [
       "What channels are connected right now?",
       "Connect my Twitter",
+      "Connect my LinkedIn",
       "Post this on X: Just shipped something cool. More details soon!",
     ],
   },
@@ -64,6 +68,7 @@ const agentConfig: Record<string, { name: string; description: string; color: st
       "Write a welcome email for new Apollo Cash users",
       "Create a 3-email drip sequence for gig workers",
       "Draft a monthly newsletter about smart borrowing",
+      "Write a re-engagement email for users who haven't borrowed in 30 days",
     ],
   },
   research: {
@@ -76,6 +81,7 @@ const agentConfig: Record<string, { name: string; description: string; color: st
       "Research trending topics for our target audience this month",
       "Analyze what gig workers are talking about online right now",
       "What content formats are performing best on Indian Instagram?",
+      "Recommend 3 content ideas based on current fintech trends",
     ],
   },
 };

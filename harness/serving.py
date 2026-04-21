@@ -975,26 +975,28 @@ async def postiz_get_posts():
 
 
 POSTIZ_INTERNAL = "https://srv1317892.hstgr.cloud/api"
-POSTIZ_AUTH_COOKIE = ""  # Will be set after login
+POSTIZ_AUTH_COOKIE = ""
+POSTIZ_AUTH_TIME = 0
 
 async def get_postiz_cookie():
-    """Login to Postiz and get auth cookie for internal API calls."""
-    global POSTIZ_AUTH_COOKIE
-    if POSTIZ_AUTH_COOKIE:
+    """Login to Postiz and get auth cookie. Re-login every 30 min."""
+    global POSTIZ_AUTH_COOKIE, POSTIZ_AUTH_TIME
+    import time
+    if POSTIZ_AUTH_COOKIE and (time.time() - POSTIZ_AUTH_TIME) < 1800:
         return POSTIZ_AUTH_COOKIE
     import requests
-    r = requests.post(f"{POSTIZ_INTERNAL}/auth/login",
-        json={"email": "demo@agentblaze.com", "password": "Blaze2026!", "provider": "LOCAL"},
-        timeout=10)
-    if r.ok:
-        POSTIZ_AUTH_COOKIE = r.headers.get("auth", "") or r.cookies.get("auth", "")
-        # Also check set-cookie header
-        for cookie in r.cookies:
-            if cookie.name == "auth":
-                POSTIZ_AUTH_COOKIE = cookie.value
-        # Try from response header (NOT_SECURED mode)
-        if not POSTIZ_AUTH_COOKIE and "auth" in r.headers:
-            POSTIZ_AUTH_COOKIE = r.headers["auth"]
+    try:
+        r = requests.post(f"{POSTIZ_INTERNAL}/auth/login",
+            json={"email": "demo@agentblaze.com", "password": "Blaze2026!", "provider": "LOCAL"},
+            timeout=10)
+        if r.ok:
+            POSTIZ_AUTH_COOKIE = r.headers.get("auth", "")
+            for cookie in r.cookies:
+                if cookie.name == "auth":
+                    POSTIZ_AUTH_COOKIE = cookie.value
+            POSTIZ_AUTH_TIME = time.time()
+    except Exception as e:
+        print(f"[POSTIZ AUTH ERROR] {e}")
     return POSTIZ_AUTH_COOKIE
 
 @app.get("/api/connect/{provider}")
