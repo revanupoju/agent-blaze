@@ -78,8 +78,8 @@ def autoresearch_loop(
     content: str,
     system_prompt: str,
     llm_fn,
-    max_iterations: int = 3,
-    threshold: float = 7.0,
+    max_iterations: int = 5,
+    threshold: float = 9.0,
     agent_name: str = "unknown",
 ) -> dict:
     """Run the autoresearch-style improvement loop.
