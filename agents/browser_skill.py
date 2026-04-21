@@ -46,9 +46,10 @@ async def _get_browser():
             if resp.ok:
                 session = resp.json()
                 session_id = session.get('id', '')
-                connect_url = f"wss://connect.browserbase.com?apiKey={BROWSERBASE_API_KEY}&sessionId={session_id}"
+                connect_url = session.get('connectUrl', f"wss://connect.browserbase.com?apiKey={BROWSERBASE_API_KEY}&sessionId={session_id}")
+                print(f"[BROWSER] Browserbase session: {session_id}, connecting...")
                 browser = await p.chromium.connect_over_cdp(connect_url)
-                print(f"[BROWSER] Browserbase session: {session_id}")
+                print(f"[BROWSER] Browserbase connected!")
                 return p, browser
             else:
                 print(f"[BROWSER] Browserbase API error: {resp.status_code} {resp.text[:200]}")
