@@ -1003,18 +1003,21 @@ async def get_postiz_cookie():
 async def connect_channel(provider: str):
     """Get OAuth URL for a social provider — returns JSON with the URL."""
     import requests
-    cookie = await get_postiz_cookie()
-    if not cookie:
-        return {"error": "Could not authenticate with Postiz"}
-    r = requests.get(f"{POSTIZ_INTERNAL}/integrations/social/{provider}",
-        headers={"Authorization": f"Bearer {cookie}", "Cookie": f"auth={cookie}"},
-        timeout=10)
-    if r.ok:
-        data = r.json()
-        if "url" in data:
-            return {"url": data["url"]}
-        return {"error": "No OAuth URL returned"}
-    return {"error": f"Postiz returned {r.status_code}"}
+    try:
+        cookie = await get_postiz_cookie()
+        if not cookie:
+            return {"error": "Could not authenticate with Postiz"}
+        r = requests.get(f"{POSTIZ_INTERNAL}/integrations/social/{provider}",
+            headers={"Authorization": f"Bearer {cookie}", "Cookie": f"auth={cookie}"},
+            timeout=8)
+        if r.ok:
+            data = r.json()
+            if "url" in data:
+                return {"url": data["url"]}
+            return {"error": "No OAuth URL returned"}
+        return {"error": f"Postiz returned {r.status_code}"}
+    except Exception as e:
+        return {"error": str(e)[:200]}
 
 @app.delete("/api/connect/{provider}")
 async def disconnect_channel(provider: str):

@@ -343,17 +343,19 @@ function DispatchChannels({ refreshKey }: { refreshKey: number }) {
   const connectPlatform = async (platformId: string) => {
     setConnecting(platformId);
     try {
-      const r = await fetch(`${API}/api/connect/${platformId}`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      const r = await fetch(`${API}/api/connect/${platformId}`, { signal: controller.signal });
+      clearTimeout(timeout);
       const data = await r.json();
       if (data.url) {
-        // Redirect directly to OAuth (e.g. Twitter login)
         window.location.href = data.url;
-      } else if (r.redirected) {
-        window.location.href = r.url;
+        return;
       }
-    } catch {
-      setConnecting(null);
-    }
+    } catch {}
+    // Fallback: open Postiz directly
+    window.open("https://srv1317892.hstgr.cloud/launches", "_blank", "noopener,noreferrer");
+    setConnecting(null);
   };
 
   if (loading) return <div className="flex items-center gap-2 text-[12px] text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> Loading channels...</div>;
