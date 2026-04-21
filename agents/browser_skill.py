@@ -112,7 +112,7 @@ async def browse_reddit(subreddit: str, limit: int = 5) -> list[dict]:
         }}""")
 
         await browser.close()
-        await p.__aexit__(None, None, None)
+        await p.stop()
         return posts
 
     except Exception as e:
@@ -145,7 +145,7 @@ async def browse_instagram(handle: str, limit: int = 5) -> list[dict]:
         }}""")
 
         await browser.close()
-        await p.__aexit__(None, None, None)
+        await p.stop()
         return posts
 
     except Exception as e:
@@ -166,7 +166,7 @@ async def browse_quora(query: str, limit: int = 5) -> list[dict]:
         content = await page.evaluate("() => document.body.innerText.substring(0, 5000)")
 
         await browser.close()
-        await p.__aexit__(None, None, None)
+        await p.stop()
         return [{"query": query, "content": content[:2000], "source": "quora"}]
 
     except Exception as e:
