@@ -500,11 +500,33 @@ async def chat(req: ChatRequest):
 
     # Browserbase-powered browsing — only for Freq (research) and Rally (community)
     if is_research and not is_followup and req.agent in ("research", "community"):
-        is_instagram = any(kw in last_msg.lower() for kw in ["instagram", "insta", "@", "competitor"])
-        print(f"[DEBUG] is_instagram={is_instagram}")
-        is_quora = any(kw in last_msg.lower() for kw in ["quora"])
-        is_browse_url = any(kw in last_msg.lower() for kw in ["browse", "open", "visit", "check out", "analyze page", "scrape"])
+        import re as _re
 
+        # Check for URL first — most specific match
+        url_match = _re.search(r'https?://\S+', last_msg)
+        is_browse_url = url_match is not None
+        is_instagram = not is_browse_url and any(kw in last_msg.lower() for kw in ["instagram", "insta", "competitor"]) and _re.search(r'@(\w+)', last_msg)
+        is_quora = not is_browse_url and any(kw in last_msg.lower() for kw in ["quora"])
+
+        # 1. URL browse — user pasted a URL, browse it with Browserbase
+        if is_browse_url:
+            try:
+                from agents.browser_skill import browse
+                print(f"[BROWSERBASE] Browsing URL: {url_match.group(0)}")
+                result = await browse(url=url_match.group(0))
+                if result.get("status") == "success":
+                    page_content = result.get("content", "")[:2000]
+                    page_title = result.get("title", url_match.group(0))
+                    insight_prompt = f"I just browsed {url_match.group(0)} ({page_title}) and extracted this content:\n\n{page_content}\n\nBased on this real data:\n1. Summarize what this page covers\n2. Give 3-4 actionable content ideas for Apollo Cash marketing inspired by what you found\n3. Recommend which agent (Vortex, Draft, Rally) should create each piece"
+                    insights = llm_call(system, insight_prompt, temp=0.7, max_tok=1500)
+                    return {"response": f"## Browsed: {page_title}\n*Via Browserbase cloud Chrome*\n\n{insights}"}
+                else:
+                    return {"response": f"**Could not browse {url_match.group(0)}** — {result.get('message', 'unknown error')}. The site may be blocking automated access."}
+            except Exception as e:
+                print(f"[BROWSERBASE] Browse error: {e}")
+                return {"response": f"**Browse error:** {str(e)[:200]}"}
+
+        # 2. Instagram — browse competitor profile
         if is_instagram:
             import re as _re
             handle_match = _re.search(r'@(\w+)|instagram\.com/(\w+)', last_msg)
@@ -556,20 +578,7 @@ async def chat(req: ChatRequest):
             except Exception as e:
                 print(f"[BROWSERBASE] Quora error: {e}")
 
-        if is_browse_url:
-            import re as _re
-            url_match = _re.search(r'https?://\S+', last_msg)
-            if url_match:
-                try:
-                    from agents.browser_skill import browse
-                    result = await browse(url=url_match.group(0))
-                    if result.get("status") == "success":
-                        page_content = result.get("content", "")[:2000]
-                        insight_prompt = f"I just browsed {url_match.group(0)} and extracted this:\n\n{page_content}\n\nSummarize what this page is about and give 2-3 content ideas inspired by it for Apollo Cash marketing."
-                        insights = llm_call(system, insight_prompt, temp=0.7, max_tok=1000)
-                        return {"response": f"## Browsed: {result.get('title', url_match.group(0))}\n*Via Browserbase cloud Chrome*\n\n{insights}"}
-                except Exception as e:
-                    print(f"[BROWSERBASE] Browse error: {e}")
+        # Old browse block removed — handled above
 
     # For community/research: fetch REAL data (but not on follow-ups — use conversation context)
     if is_research and not is_followup and req.agent in ("research", "community"):
