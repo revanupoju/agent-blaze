@@ -1193,11 +1193,15 @@ async def upload_media(file: UploadFile = FastAPIFile(...)):
         return {"url": data.get("path", ""), "id": data.get("id", "")}
     return {"error": f"Upload failed: {r.text}"}
 
+class BrowseRequest(BaseModel):
+    url: str = ""
+    task: str = "extract main content"
+
 @app.post("/api/browse")
-async def browser_browse(url: str = "", task: str = ""):
+async def browser_browse(req: BrowseRequest):
     """Browse a URL with cloud Chrome (Browserbase) and extract content."""
     from agents.browser_skill import browse
-    return await browse(url=url, extract=task)
+    return await browse(url=req.url, extract=req.task)
 
 @app.post("/api/browse/reddit")
 async def browser_reddit(subreddit: str = "personalfinanceindia"):
