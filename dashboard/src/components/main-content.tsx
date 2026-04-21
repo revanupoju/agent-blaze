@@ -13,10 +13,9 @@ const agentConfig: Record<string, { name: string; description: string; color: st
     icon: "/vortex.svg",
     apiEndpoint: "/api/social/generate",
     suggestions: [
-      "Generate 5 Instagram carousel posts about salary delay problems",
       "Write a reel script about bike repair emergencies for gig workers",
+      "Generate 5 Instagram carousel posts about salary delay problems",
       "Create a Twitter thread busting myths about personal loans",
-      "Generate WhatsApp forward-style content about medical emergency funding",
     ],
   },
   seo: {
@@ -28,7 +27,6 @@ const agentConfig: Record<string, { name: string; description: string; color: st
     suggestions: [
       "Write an article targeting 'instant personal loan app India'",
       "Create a guide on 'how to get a loan without CIBIL score'",
-      "Write a problem-solving article about salary delay emergencies",
       "Generate a comparison article: borrowing from friends vs loan apps",
     ],
   },
@@ -42,7 +40,6 @@ const agentConfig: Record<string, { name: string; description: string; color: st
       "Generate responses for Reddit threads about emergency loans",
       "Write Quora answers about getting loans without credit history",
       "Create Twitter replies for people complaining about salary delays",
-      "Generate Facebook group responses for gig worker money problems",
     ],
   },
   dispatch: {
@@ -52,10 +49,9 @@ const agentConfig: Record<string, { name: string; description: string; color: st
     icon: "/dispatch.svg",
     apiEndpoint: "/api/chat",
     suggestions: [
-      "Post this to Instagram: Salary delays hit different when rent is due tomorrow",
-      "Schedule a tweet for tomorrow 9 AM about emergency loans",
       "What channels are connected right now?",
-      "Take the last Vortex post and publish it to all channels",
+      "Connect my Twitter",
+      "Post this on X: Just shipped something cool. More details soon!",
     ],
   },
   email: {
@@ -68,7 +64,6 @@ const agentConfig: Record<string, { name: string; description: string; color: st
       "Write a welcome email for new Apollo Cash users",
       "Create a 3-email drip sequence for gig workers",
       "Draft a monthly newsletter about smart borrowing",
-      "Write a re-engagement email for inactive users",
     ],
   },
   research: {
@@ -81,7 +76,6 @@ const agentConfig: Record<string, { name: string; description: string; color: st
       "Research trending topics for our target audience this month",
       "Analyze what gig workers are talking about online right now",
       "What content formats are performing best on Indian Instagram?",
-      "Recommend strategy adjustments based on our engagement data",
     ],
   },
 };
