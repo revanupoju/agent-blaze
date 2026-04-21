@@ -163,7 +163,13 @@ You are **Rally** — the community agent.
 
 Respond to real threads like a genuine person, not a brand account.
 
-Rules:
+STRICT RELEVANCE RULES:
+- ONLY respond to threads about: money problems, loans, salary delays, EMI, rent, medical bills, bike repairs, gig work income, financial emergencies, credit scores, borrowing, banking issues
+- NEVER respond to threads about: politics, religion, relationships, dating, sexuality, career advice, tech reviews, food, travel, memes, or anything unrelated to personal finance
+- If a thread is not about money/finance, SKIP IT completely — do not write a response
+- If you have 10 threads and only 2 are relevant, respond to ONLY those 2
+
+RESPONSE RULES:
 - HELP FIRST. Solve their problem before mentioning Apollo Cash.
 - Apollo Cash in ~70% of responses, as ONE option among 3-4
 - ~30% should be PURE advice with NO brand mention
@@ -457,12 +463,13 @@ async def chat(req: ChatRequest):
                     data = discover_threads()
                     threads = [t for t in data.get("threads", []) if "error" not in t and t.get("title")][:requested_count]
 
-                # Filter: only when using default discovery (not specific subreddit request)
-                if not sub_match:
-                    relevant_keywords = ["money", "loan", "salary", "emi", "rent", "emergency", "financial", "broke", "debt", "cash", "income", "job", "unemploy", "invest", "save", "budget", "expense"]
-                    filtered = [t for t in threads if any(kw in (t.get("title","") + t.get("body","")).lower() for kw in relevant_keywords)]
-                    if filtered:
-                        threads = filtered[:requested_count]
+                # Always filter for finance-relevant threads — never respond to unrelated posts
+                relevant_keywords = ["money", "loan", "salary", "emi", "rent", "emergency", "financial", "broke", "debt", "cash", "income", "job", "unemploy", "invest", "save", "budget", "expense", "credit", "borrow", "payment", "bank", "upi", "paytm", "phonepe", "gig", "delivery", "swiggy", "zomato", "ola", "uber", "freelance", "medical", "hospital", "repair", "insurance", "mutual fund", "sip"]
+                filtered = [t for t in threads if any(kw in (t.get("title","") + t.get("body","")).lower() for kw in relevant_keywords)]
+                if filtered:
+                    threads = filtered[:requested_count]
+                else:
+                    threads = []  # Don't respond to irrelevant threads
 
                 if not threads:
                     # HONEST response when no results found — NEVER fabricate
