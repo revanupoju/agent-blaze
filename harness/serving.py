@@ -577,7 +577,7 @@ etc."""
 
 Give 3-4 actionable content recommendations for Apollo Cash marketing. What should Vortex, Draft, and Rally create based on what's trending? Be specific."""
 
-                insights = llm_call(system, insight_prompt, temp=0.7, max_tokens=1000)
+                insights = llm_call(system, insight_prompt, temp=0.7, max_tok=1000)
                 parts.append("\n### Content Recommendations\n")
                 parts.append(insights)
 

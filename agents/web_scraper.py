@@ -23,9 +23,10 @@ HEADERS = {
 
 # Multiple Reddit endpoints to try (fallback chain including proxy)
 REDDIT_URLS = [
-    "https://old.reddit.com/r/{sub}/{sort}.json?limit={limit}",
     "https://www.reddit.com/r/{sub}/{sort}.json?limit={limit}&raw_json=1",
+    "https://old.reddit.com/r/{sub}/{sort}.json?limit={limit}",
     "https://api.reddit.com/r/{sub}/{sort}?limit={limit}",
+    "https://www.reddit.com/r/{sub}/search.json?q=loan+emergency&restrict_sr=1&sort=new&limit={limit}&raw_json=1",
 ]
 
 # Pullpush.io is a free Reddit archive API — works when Reddit blocks direct access
