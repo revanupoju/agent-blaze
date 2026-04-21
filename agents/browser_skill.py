@@ -32,12 +32,16 @@ except ImportError:
 def _get_llm():
     """Get LLM for browser-use agent. Uses Cerebras via OpenAI-compatible API."""
     api_key = os.environ.get("CEREBRAS_API_KEY", "")
-    return ChatOpenAI(
+    llm = ChatOpenAI(
         model="qwen-3-235b-a22b-instruct-2507",
         base_url="https://api.cerebras.ai/v1",
         api_key=api_key,
         temperature=0.3,
     )
+    # browser-use checks for .provider attribute — add it
+    if not hasattr(llm, 'provider'):
+        llm.provider = 'openai'
+    return llm
 
 
 async def browse(task: str, url: str = "") -> dict:
